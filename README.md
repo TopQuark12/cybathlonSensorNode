@@ -1,5 +1,6 @@
 # IMU and magnetic encoder sensor node
 This repositry stores PCB files and firmware for HKUST Cybathlon sensor node.  
+Repositry created and maintained by Alex Wong.  
   
 ## Hardware function
 Each sensor node is intended to contain either a ICM-20602 IMU or MA730 magnetic rotary encoder. It is also possible for one node to contain both sensors.  
