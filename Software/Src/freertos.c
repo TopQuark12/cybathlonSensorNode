@@ -56,7 +56,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
-
+#include "spi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -76,6 +76,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
+static uint16_t magRxData;
+static uint16_t magTxData;
+static HAL_StatusTypeDef spiStatus;
 
 /* USER CODE END Variables */
 osThreadId canTxThreadHandle;
@@ -207,9 +211,19 @@ void startCanTx(void const * argument)
   MX_FATFS_Init();
 
   /* USER CODE BEGIN startCanTx */
+
+  magRxData = 0;
+  magTxData = 0;
+  spiStatus = 0;
+
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
+
+    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
+    spiStatus = HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
+
     osDelay(1);
   }
   /* USER CODE END startCanTx */
