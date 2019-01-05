@@ -1,7 +1,10 @@
 #MicroXplorer Configuration settings - do not modify
 CAN1.AWUM=ENABLE
-CAN1.CalculateTimeQuantum=380.95238095238096
-CAN1.IPParameters=CalculateTimeQuantum,AWUM
+CAN1.BS1=CAN_BS1_6TQ
+CAN1.BS2=CAN_BS2_7TQ
+CAN1.CalculateTimeQuantum=71.42857142857143
+CAN1.IPParameters=CalculateTimeQuantum,AWUM,Prescaler,BS1,BS2
+CAN1.Prescaler=3
 Dma.Request0=SPI1_RX
 Dma.Request1=SPI1_TX
 Dma.Request2=SPI2_RX
