@@ -93,6 +93,8 @@ void Error_Handler(void);
 #define ENC_MGL_GPIO_Port GPIOC
 #define ENC_MGH_Pin GPIO_PIN_1
 #define ENC_MGH_GPIO_Port GPIOC
+#define IMU_CS_Pin GPIO_PIN_4
+#define IMU_CS_GPIO_Port GPIOA
 #define IMU_EXTI_Pin GPIO_PIN_4
 #define IMU_EXTI_GPIO_Port GPIOC
 #define SPI2_CS_Pin GPIO_PIN_12

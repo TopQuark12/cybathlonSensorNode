@@ -77,9 +77,10 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+static uint8_t spiImuTxData[16];
+static uint8_t spiImuRxData[16];
 static uint16_t magRxData;
 static uint16_t magTxData;
-static HAL_StatusTypeDef spiStatus;
 
 /* USER CODE END Variables */
 osThreadId canTxThreadHandle;
@@ -214,14 +215,40 @@ void startCanTx(void const * argument)
 
   magRxData = 0;
   magTxData = 0;
-  spiStatus = 0;
+
+  spiImuTxData[0] = 107;
+  spiImuTxData[1] = 0b00000001;
+  HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
+  HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 2, HAL_MAX_DELAY);
+  HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
+
+  osDelay(500);
+
+  spiImuTxData[0] = 59 | 0b10000000;
+  spiImuTxData[1] = 60 | 0b10000000;
+  spiImuTxData[2] = 61 | 0b10000000;
+  spiImuTxData[3] = 62 | 0b10000000;
+  spiImuTxData[4] = 63 | 0b10000000;
+  spiImuTxData[5] = 64 | 0b10000000;
+  spiImuTxData[6] = 65 | 0b10000000;
+  spiImuTxData[7] = 66 | 0b10000000;
+  spiImuTxData[8] = 67 | 0b10000000;
+  spiImuTxData[9] = 68 | 0b10000000;
+  spiImuTxData[10] = 69 | 0b10000000;
+  spiImuTxData[11] = 70 | 0b10000000;
+  spiImuTxData[12] = 71 | 0b10000000;
+  spiImuTxData[13] = 72 | 0b10000000;
 
   /* Infinite loop */
   for (;;)
   {
 
+    HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
+    HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
+
     HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
-    spiStatus = HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
+    HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
 
     osDelay(1);
