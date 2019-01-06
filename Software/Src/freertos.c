@@ -58,6 +58,11 @@
 /* USER CODE BEGIN Includes */     
 #include "spi.h"
 #include "can.h"
+#include "bsp_driver_sd.h"
+#include "stm32f4xx_hal.h"
+#include "fatfs.h"
+#include "sdio.h"
+#include "sd_card.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -241,6 +246,9 @@ void startCanTx(void const * argument)
 
   /* USER CODE BEGIN startCanTx */
 
+  BSP_SD_Init();
+  sd_test();
+
   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
@@ -290,17 +298,19 @@ void startCanTx(void const * argument)
   for (;;)
   {
 
-    HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed);
+    error_detect(err);
 
-    HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-    HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
+    // HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed);
 
-    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
-    HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
+    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
+    // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
+    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
 
-    osDelay(1);
+    // HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
+    // HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
+    // HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
+
+    osDelay(500);
   }
   /* USER CODE END startCanTx */
 }

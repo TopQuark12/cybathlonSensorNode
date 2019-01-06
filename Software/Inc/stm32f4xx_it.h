@@ -81,6 +81,8 @@ void SDIO_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
 void DMA2_Stream0_IRQHandler(void);
 void DMA2_Stream3_IRQHandler(void);
+void DMA2_Stream5_IRQHandler(void);
+void DMA2_Stream6_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
