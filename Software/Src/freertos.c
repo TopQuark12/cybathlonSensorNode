@@ -88,7 +88,7 @@ static uint8_t spiImuRxData[16];
 static uint16_t magRxData;
 static uint16_t magTxData;
 
-static const CAN_FilterTypeDef canAllPassFilter =
+static CAN_FilterTypeDef canAllPassFilter =
 {
   0,
   0,
@@ -285,32 +285,22 @@ void startCanTx(void const * argument)
   canTxFrame.DLC = 8;
   canTxFrame.TransmitGlobalTime = DISABLE;
 
-  canTxBuffer[0] = 1000 >> 8;
-  canTxBuffer[1] = 1000;
-  canTxBuffer[2] = 1000 >> 8;
-  canTxBuffer[3] = 1000;
-  canTxBuffer[4] = 1000 >> 8;
-  canTxBuffer[5] = 1000;
-  canTxBuffer[6] = 1000 >> 8;
-  canTxBuffer[7] = 1000;
-
   /* Infinite loop */
   for (;;)
   {
 
-    error_detect(err);
+    HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed);
 
-    // HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed);
+    HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
+    HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
 
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-    // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
-
-    // HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
-    // HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
-    // HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
+    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
+    HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
 
     osDelay(500);
+
   }
   /* USER CODE END startCanTx */
 }

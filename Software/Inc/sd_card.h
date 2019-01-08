@@ -20,7 +20,6 @@
 extern uint8_t err;
 
 void sd_test(void);
-void error_detect(uint8_t err);
 
 #endif
 

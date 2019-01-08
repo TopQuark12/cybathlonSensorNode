@@ -20,69 +20,8 @@ static uint8_t buffer[_MAX_SS];                       /* a work buffer for the f
 uint32_t       byteswritten, bytesread;               /* file write/read counts */
 uint8_t        rtext[100];                            /* file read buffer */
 uint8_t        err;
-static char    *f_name = "robomaster.txt";           /* file name */
-uint8_t        wtext[] = " Welcome to Robomaster! "; /* file write buffer */
-// extern UART_HandleTypeDef huart6;
-/**
-  * @brief  read ok indicator
-  * @param  
-  * @retval 
-  */
-static void read_ok(void)
-{
-	HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, GPIO_PIN_RESET);
-}
-
-/**
-  * @brief      show errors by blinking led
-  * @param[in]  err: error id
-  * @retval 
-  */
-static void led_blinking(uint8_t num)
-{
-	uint8_t i;
-	for (i = 0; i < num; i++)
-	{
-		HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, GPIO_PIN_RESET);
-		osDelay(100);
-		HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, GPIO_PIN_SET);
-		osDelay(100);
-	}
-	osDelay(500);
-}
-
-/**
-  * @brief      show errors by blinking led
-  * @param[in]  err: error id
-  * @retval 
-  */
-void error_detect(uint8_t err)
-{
-		switch (err)
-		{
-			case ERR_MOUNT_MKFS:
-			{
-				led_blinking(ERR_MOUNT_MKFS);
-				// HAL_UART_Transmit(&huart6, (uint8_t *)" Register file system error or create file system error!\n",  \
-				//                  (COUNTOF(" Register file system error or create file system error!\n") - 1), 55);
-				osDelay(10);	
-			}break;
-
-			case ERR_OPEN:
-			{
-				led_blinking(ERR_OPEN);
-				// HAL_UART_Transmit(&huart6, (uint8_t *)" Open file error!\n", (COUNTOF(" Open file error!\n") - 1), 55);
-				osDelay(10);	
-			}break;
-			
-			default:
-			{
-				// HAL_UART_Transmit(&huart6, (uint8_t *)" Write & Read ok, welcome to Robomaster!\n", \
-				//                  (COUNTOF(" Write & Read ok, welcome to Robomaster!\n") - 1), 55);
-				osDelay(10);	
-			}break;
-		}
-}
+static char    *f_name = "cybathlon.txt";           /* file name */
+uint8_t        wtext[] = " Welcome to HKUST! "; 	/* file write buffer */
 
 /**
   * @brief  doing some tests to SD card, like mount, create file, open a text etc. 
@@ -108,8 +47,7 @@ void sd_test(void)
 				{
 					/* Read data from the text file */
 					f_read(&SDFile, rtext, sizeof(rtext), (UINT*)&bytesread);  
-					read_ok();
-
+					
 					/* Close the open text file */
 					f_close(&SDFile);  
 				}
