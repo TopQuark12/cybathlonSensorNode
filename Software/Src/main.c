@@ -62,6 +62,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "bsp_driver_sd.h"
+#include "stm32f4xx_hal.h"
+#include "fatfs.h"
+#include "sdio.h"
+#include "sd_card.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -132,6 +138,10 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
+
+  // MX_FATFS_Init();
+  // BSP_SD_Init();
+  // sd_test();
 
   /* USER CODE END 2 */
 
