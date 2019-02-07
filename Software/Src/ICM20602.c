@@ -19,6 +19,13 @@
 
 imu_t gIMUdata;
 
+int16_t gyroOffsetX;
+int16_t gyroOffsetY;
+int16_t gyroOffsetZ;
+int16_t accelOffsetX;
+int16_t accelOffsetY;
+int16_t accelOffsetZ;
+
 /**
  * @brief	Basic bytewise SPI transmit and receive, with CS pin setting
  * @param	pTxData	    pointer to the transmit buffer

@@ -20,9 +20,9 @@ TARGET = ExoSenNode_CUBE
 # building variables
 ######################################
 # debug build?
-DEBUG = 0
+DEBUG = 1
 # optimization
-OPT = -Os
+OPT = -O2
 
 
 #######################################
@@ -85,7 +85,8 @@ Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c \
 Src/sd_card.c \
 Middlewares/Third_Party/FatFs/src/option/ccsbcs.c \
-Src/ICM20602.c
+Src/ICM20602.c \
+Src/flash.c
 
 # ASM sources
 ASM_SOURCES =  \
