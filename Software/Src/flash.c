@@ -57,27 +57,24 @@ FLASH_EraseInitTypeDef userSectorErase =
 
 uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 {
-
+    HAL_SuspendTick();
     *flag = FLASH_SAVING;
-    // if (HAL_FLASH_Unlock() != HAL_OK)
-    // {
-    //     *flag = FLASH_SAVE_ERROR_UNLOCK;
-    //     return 1;   //Flash unlock error
-    // }
-
+    if (HAL_FLASH_Unlock() != HAL_OK)
+    {
+        *flag = FLASH_SAVE_ERROR_UNLOCK;
+        return 1;   //Flash unlock error
+    }
+    
     static uint32_t sectorError = 0;
-    FLASH_WaitForLastOperation(10000);
+    //FLASH_WaitForLastOperation(10000);
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
                            FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
-    HAL_FLASH_Unlock();
-    HAL_FLASHEx_Erase(&userSectorErase, &sectorError);
-   
-    // if (HAL_FLASHEx_Erase(&userSectorErase, &sectorError) != HAL_OK)
-    // {
-    //     HAL_FLASH_Lock();
-    //     *flag = FLASH_SAVE_ERROR_ERASE;
-    //     return 1; //Flash erase error
-    // }
+    if (HAL_FLASHEx_Erase(&userSectorErase, &sectorError) != HAL_OK)
+    {
+        HAL_FLASH_Lock();
+        *flag = FLASH_SAVE_ERROR_ERASE;
+        return 1; //Flash erase error
+    }
 
     HAL_StatusTypeDef status = HAL_OK;
     while ((paramList->data != NULL) && (status == HAL_OK))
@@ -100,6 +97,7 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
         return 1; //Flash write error
     }
     *flag = FLASH_SAVE_READY;
+    HAL_ResumeTick();
     return 0;
 }
 

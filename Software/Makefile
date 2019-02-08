@@ -22,7 +22,7 @@ TARGET = ExoSenNode_CUBE
 # debug build?
 DEBUG = 1
 # optimization
-OPT = -O2
+OPT = -O3
 
 
 #######################################

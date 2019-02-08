@@ -227,7 +227,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityBelowNormal, 
+  osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityAboveNormal, 
                     0, 256, flashSaveThreadBuffer, &flashSaveThreadControlBlock);
   flashSaveThreadHandle = osThreadCreate(osThread(flashSaveThread), NULL);
   /* USER CODE END RTOS_THREADS */
