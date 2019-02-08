@@ -18,7 +18,7 @@
 #include "flash.h"
 #include "ICM20602.h"
 
-flashSaveStatus_e flashSaveFlag = FLASH_SAVE_READY;
+flashSaveStatus_e flashSaveFlag;
 osThreadId flashSaveThreadHandle;
 uint32_t flashSaveThreadBuffer[256];
 osStaticThreadDef_t flashSaveThreadControlBlock;
@@ -32,14 +32,6 @@ const flashParamEntry_t savedParameters[] =
     {&accelOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
     {&accelOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},
     {NULL, 0}
-};
-
-const size_t flashDataTypeToSize[] =
-{
-    sizeof(uint8_t),
-    sizeof(uint16_t),
-    sizeof(uint32_t),
-    sizeof(uint64_t)
 };
 
 FLASH_EraseInitTypeDef userSectorErase =
@@ -57,7 +49,13 @@ FLASH_EraseInitTypeDef userSectorErase =
 
 uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 {
+    static uint32_t flashDataTypeToSize[] =
+    {
+        1, 2, 4, 8
+    };
     HAL_SuspendTick();
+    static flashParamEntry_t *paramPtr;
+    paramPtr = (flashParamEntry_t *) paramList;
     *flag = FLASH_SAVING;
     if (HAL_FLASH_Unlock() != HAL_OK)
     {
@@ -77,18 +75,24 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
     }
 
     HAL_StatusTypeDef status = HAL_OK;
-    while ((paramList->data != NULL) && (status == HAL_OK))
+    static uint32_t flashAddress;
+    static uint64_t tempData;
+    flashAddress = FLASH_SECTOR_ADDR;
+    // while ((paramList->data != NULL) && (status == HAL_OK))
+    while ((status == HAL_OK))
     {
-        void *flashAddress = FLASH_SECTOR_ADDR;
-        if (!IS_FLASH_TYPEPROGRAM(paramList->dataType))
+        if (!IS_FLASH_TYPEPROGRAM(paramPtr->dataType))
         {
             HAL_FLASH_Lock();
             *flag = FLASH_SAVE_ERROR_INVALID_DATA_TYPE;
             return 1; //Invalid dataType
         }
-        status = HAL_FLASH_Program(paramList->dataType, (uint32_t)flashAddress, *(uint64_t *)(paramList->data));
-        flashAddress += flashDataTypeToSize[paramList->dataType];
-        paramList++;
+        memcpy(&tempData, paramPtr->data, flashDataTypeToSize[paramPtr->dataType]);
+        status = HAL_FLASH_Program(paramPtr->dataType, flashAddress, tempData);
+        paramPtr++;
+        flashAddress = flashAddress + flashDataTypeToSize[paramPtr->dataType];
+        if (paramPtr->data == NULL)
+            break;
     }
 
     HAL_FLASH_Lock();
@@ -103,6 +107,7 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 
 void flashSaveThreadFunction(const void *argument)
 {
+    flashSaveFlag = FLASH_SAVE_READY;
     while(1)
     {
         osDelay(1);
