@@ -11,6 +11,13 @@
 #define ICM20602_TEMP_SENSITIVITY	        (float) 1/326.8
 #define ICM20602_TEMP_OFFSET	            (float) 25.0
 
+//set to global enabling flash.c to save and load these values from flash
+extern int16_t gyroOffsetX;
+extern int16_t gyroOffsetY;
+extern int16_t gyroOffsetZ;
+extern int16_t accelOffsetX;
+extern int16_t accelOffsetY;
+extern int16_t accelOffsetZ;
 
 //icm20602 register address list
 typedef enum

@@ -67,6 +67,7 @@
 #include "fatfs.h"
 #include "sdio.h"
 #include "sd_card.h"
+#include "flash.h"
 
 /* USER CODE END Includes */
 
@@ -139,9 +140,8 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
-  // MX_FATFS_Init();
-  // BSP_SD_Init();
-  // sd_test();
+  gFlashSaveFlag = FLASH_SAVE_READY;    //Setup flash parameter saving and loading
+  flashLoad(NULL);                      //Load default set of parameters
 
   /* USER CODE END 2 */
 

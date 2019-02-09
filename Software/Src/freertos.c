@@ -64,6 +64,7 @@
 #include "sdio.h"
 #include "sd_card.h"
 #include "ICM20602.h"
+#include "flash.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -226,6 +227,9 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityAboveNormal, 
+                    0, 256, flashSaveThreadBuffer, &flashSaveThreadControlBlock);
+  flashSaveThreadHandle = osThreadCreate(osThread(flashSaveThread), NULL);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -243,7 +247,7 @@ void MX_FREERTOS_Init(void) {
 void startCanTx(void const * argument)
 {
   /* init code for FATFS */
-  MX_FATFS_Init();
+  //MX_FATFS_Init();
 
   /* USER CODE BEGIN startCanTx */
 
@@ -264,6 +268,7 @@ void startCanTx(void const * argument)
   // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
 
   icm20602Init();
+  //flashInit();
 
   osDelay(500);
 
