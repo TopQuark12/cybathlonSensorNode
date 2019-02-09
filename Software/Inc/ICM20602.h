@@ -22,6 +22,12 @@ extern int16_t accelOffsetZ;
 //icm20602 register address list
 typedef enum
 {
+    XG_OFFS_USRH = 0x13, //used to remove DC bias from the sensor output
+    XG_OFFS_USRL,        //added to the gyroscope sensor value before going into the sensor register
+    YG_OFFS_USRH,        //2's complement
+    YG_OFFS_USRL,
+    ZG_OFFS_USRH,
+    ZG_OFFS_USRL,
     CONFIG = 0x1A,
     GYRO_CONFIG,
     ACCEL_CONFIG,
@@ -41,7 +47,13 @@ typedef enum
     GYRO_ZOUT_H,
     GYRO_ZOUT_L,
     PWR_MGMT_1 = 0x6B,
-    WHO_AM_I = 0x75
+    WHO_AM_I = 0x75,
+    XA_OFFSET_H = 0x77,
+    XA_OFFSET_L,
+    YA_OFFSET_H,
+    YA_OFFSET_L,
+    ZA_OFFSET_H,
+    ZA_OFFSET_L,
 } icm20602Reg;
 
 //gyroscope and temperature sensor LP-filter config

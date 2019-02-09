@@ -81,11 +81,30 @@ uint8_t icm20602Init(void)
     {
         return 0;
     }
-    icm20602WriteReg(PWR_MGMT_1, 1);       //clear sleep bit to activate sensor
+    //reset sensor
+    icm20602WriteReg(PWR_MGMT_1, 0x80);
+    osDelay(1000);
+    //clear sleep bit to activate sensor
+    icm20602WriteReg(PWR_MGMT_1, 0x01);
+    //apply sensor filter setting
     icm20602WriteReg(CONFIG, GYRO_LPF_176HZ);
+    icm20602WriteReg(ACCEL_CONFIG2, ACCEL_LPF_218_1);
+    //apply sensor measurement range setting
     icm20602WriteReg(GYRO_CONFIG, ICM20602_GYRO_MEASUREMENT_RANGE << 3); //shift by 3 bits, don't change
     icm20602WriteReg(ACCEL_CONFIG, ICM20602_ACCEL_MEASUREMENT_RANGE << 3); //shift by 3 bits, don't change
-    icm20602WriteReg(ACCEL_CONFIG2, ACCEL_LPF_218_1);
+    //apply sensor offset setting
+    icm20602WriteReg(XG_OFFS_USRH, (uint8_t)gyroOffsetX >> 8);
+    icm20602WriteReg(XG_OFFS_USRL, (uint8_t)gyroOffsetX);
+    icm20602WriteReg(YG_OFFS_USRH, (uint8_t)gyroOffsetY >> 8);
+    icm20602WriteReg(YG_OFFS_USRL, (uint8_t)gyroOffsetY);
+    icm20602WriteReg(ZG_OFFS_USRH, (uint8_t)gyroOffsetZ >> 8);
+    icm20602WriteReg(ZG_OFFS_USRL, (uint8_t)gyroOffsetZ);
+    icm20602WriteReg(XA_OFFSET_H, (uint8_t)accelOffsetX >> 8);
+    icm20602WriteReg(XA_OFFSET_L, (uint8_t)accelOffsetX);
+    icm20602WriteReg(YA_OFFSET_H, (uint8_t)accelOffsetY >> 8);
+    icm20602WriteReg(YA_OFFSET_L, (uint8_t)accelOffsetY);
+    icm20602WriteReg(ZA_OFFSET_H, (uint8_t)accelOffsetZ >> 8);
+    icm20602WriteReg(ZA_OFFSET_L, (uint8_t)accelOffsetZ);
     return 1;
 }
 
