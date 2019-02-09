@@ -86,8 +86,7 @@ FLASH_EraseInitTypeDef userSectorErase =
 uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 {
     HAL_SuspendTick();
-    static flashParamEntry_t *paramPtr;
-    paramPtr = (flashParamEntry_t *) paramList;
+    paramList = (flashParamEntry_t *) paramList;
     *flag = FLASH_SAVING;
     if (HAL_FLASH_Unlock() != HAL_OK)
     {
@@ -111,25 +110,25 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
     static uint64_t tempData;    
     while ((status == HAL_OK))
     {
-        if (!IS_FLASH_TYPEPROGRAM(paramPtr->dataType))
+        if (!IS_FLASH_TYPEPROGRAM(paramList->dataType))
         {
             HAL_FLASH_Lock();
             *flag = FLASH_SAVE_ERROR_INVALID_DATA_TYPE;
             return 1; //Invalid dataType
         }
-        if (paramPtr->dataType == FLASH_TYPEPROGRAM_DOUBLEWORD) 
+        if (paramList->dataType == FLASH_TYPEPROGRAM_DOUBLEWORD) 
         {
-            memcpy(&tempData, paramPtr->data, flashDataTypeToSize[FLASH_TYPEPROGRAM_WORD]);
+            memcpy(&tempData, paramList->data, flashDataTypeToSize[FLASH_TYPEPROGRAM_WORD]);
             status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flashAddress, tempData);
-            memcpy(&tempData, paramPtr->data + sizeof(uint32_t), flashDataTypeToSize[FLASH_TYPEPROGRAM_WORD]);
+            memcpy(&tempData, paramList->data + sizeof(uint32_t), flashDataTypeToSize[FLASH_TYPEPROGRAM_WORD]);
             status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flashAddress + sizeof(uint32_t), tempData);
         } else {
-            memcpy(&tempData, paramPtr->data, flashDataTypeToSize[paramPtr->dataType]);
-            status = HAL_FLASH_Program(paramPtr->dataType, flashAddress, tempData);
+            memcpy(&tempData, paramList->data, flashDataTypeToSize[paramList->dataType]);
+            status = HAL_FLASH_Program(paramList->dataType, flashAddress, tempData);
         }
-        paramPtr++;
+        paramList++;
         flashAddress += sizeof(uint64_t);
-        if (paramPtr->data == NULL)
+        if (paramList->data == NULL)
             break;
     }
 
