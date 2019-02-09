@@ -23,6 +23,36 @@ osThreadId flashSaveThreadHandle;
 uint32_t flashSaveThreadBuffer[256];
 osStaticThreadDef_t flashSaveThreadControlBlock;
 
+uint8_t byteTest = 0;
+uint16_t halfWordTest = 0;
+uint32_t wordTest = 0;
+uint64_t doubleWordTest = 0;
+float floatTest = 0;
+double doubleTest = 0;
+
+/**
+ * @brief   helper to translate FLASH_Type_Program to memory size
+ * @warning	do not modify
+ */
+static uint32_t flashDataTypeToSize[] =
+{
+    sizeof(uint8_t),
+    sizeof(uint16_t),
+    sizeof(uint32_t),
+    sizeof(uint64_t)
+};
+
+/**
+ * @brief	list pf parameters to save into flash
+ * @warning	only extend this list but never modify of delete the existing entries
+ *          terminate with {NULL, 0}
+ * 
+ * @detail  data types with following data sizes are supported
+ *          FLASH_TYPEPROGRAM_BYTE	        (8 bit)
+ *          FLASH_TYPEPROGRAM_HALFWORD	    (16 bit)
+ *          FLASH_TYPEPROGRAM_WORD	        (32 bit)
+ *          FLASH_TYPEPROGRAM_DOUBLEWORD    (64-bit)
+ */
 const flashParamEntry_t savedParameters[] =
 {
     {&gyroOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
@@ -31,9 +61,19 @@ const flashParamEntry_t savedParameters[] =
     {&accelOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
     {&accelOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
     {&accelOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},
+    {&byteTest, FLASH_TYPEPROGRAM_BYTE},
+    {&halfWordTest, FLASH_TYPEPROGRAM_HALFWORD},
+    {&wordTest, FLASH_TYPEPROGRAM_WORD},
+    {&doubleWordTest, FLASH_TYPEPROGRAM_DOUBLEWORD},
+    {&floatTest, FLASH_TYPEPROGRAM_WORD},
+    {&doubleTest, FLASH_TYPEPROGRAM_DOUBLEWORD},
     {NULL, 0}
 };
 
+/**
+ * @brief	setting for erasing the flash sector used for storing parameters
+ * @warning do not modify
+ */
 FLASH_EraseInitTypeDef userSectorErase =
 {
     FLASH_TYPEERASE_SECTORS, //Erase sectors instead of mass erase
@@ -43,16 +83,8 @@ FLASH_EraseInitTypeDef userSectorErase =
     FLASH_VOLTAGE_RANGE_3    //Range 3 requires 2.7-3.6v, erases 32 bits at a time, takes about 1 sec for sector 11
 };
 
-// void flashInit(void) {
-
-// }
-
 uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 {
-    static uint32_t flashDataTypeToSize[] =
-    {
-        1, 2, 4, 8
-    };
     HAL_SuspendTick();
     static flashParamEntry_t *paramPtr;
     paramPtr = (flashParamEntry_t *) paramList;
@@ -64,7 +96,6 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
     }
     
     static uint32_t sectorError = 0;
-    //FLASH_WaitForLastOperation(10000);
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
                            FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
     if (HAL_FLASHEx_Erase(&userSectorErase, &sectorError) != HAL_OK)
@@ -78,7 +109,6 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
     static uint32_t flashAddress;
     static uint64_t tempData;
     flashAddress = FLASH_SECTOR_ADDR;
-    // while ((paramList->data != NULL) && (status == HAL_OK))
     while ((status == HAL_OK))
     {
         if (!IS_FLASH_TYPEPROGRAM(paramPtr->dataType))
@@ -87,10 +117,18 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
             *flag = FLASH_SAVE_ERROR_INVALID_DATA_TYPE;
             return 1; //Invalid dataType
         }
-        memcpy(&tempData, paramPtr->data, flashDataTypeToSize[paramPtr->dataType]);
-        status = HAL_FLASH_Program(paramPtr->dataType, flashAddress, tempData);
+        if (paramPtr->dataType == FLASH_TYPEPROGRAM_DOUBLEWORD) 
+        {
+            memcpy(&tempData, paramPtr->data, flashDataTypeToSize[FLASH_TYPEPROGRAM_WORD]);
+            status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flashAddress, tempData);
+            memcpy(&tempData, paramPtr->data + sizeof(uint32_t), flashDataTypeToSize[FLASH_TYPEPROGRAM_WORD]);
+            status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flashAddress + sizeof(uint32_t), tempData);
+        } else {
+            memcpy(&tempData, paramPtr->data, flashDataTypeToSize[paramPtr->dataType]);
+            status = HAL_FLASH_Program(paramPtr->dataType, flashAddress, tempData);
+        }
         paramPtr++;
-        flashAddress = flashAddress + flashDataTypeToSize[paramPtr->dataType];
+        flashAddress += sizeof(uint64_t);
         if (paramPtr->data == NULL)
             break;
     }

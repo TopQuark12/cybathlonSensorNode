@@ -26,7 +26,7 @@ typedef struct flashParamEntry_t
     uint32_t dataType;  //Assumes a value of FLASH_Type_Program
 } flashParamEntry_t;
 
-//void flashInit(void);
+extern flashSaveStatus_e flashSaveFlag;
 void flashSaveThreadFunction(const void *argument);
 
 #endif //FLASH_H
