@@ -18,11 +18,26 @@
 #include "flash.h"
 #include "ICM20602.h"
 
-flashSaveStatus_e flashSaveFlag;
+/**
+ * @brief	flag controlling the save funtion of the flash module
+ * @usage	set to 1 (FLASH_SAVE) to start a save operation, can be set through debug interface
+ * @detail	flag is set to 2 (FLASH_SAVING) by program when a save operation is on going
+ *          reverts to 0 (FLASH_SAVE_READY) if flash save is successful
+ *          in case if the flag is set to error values (FLASH_SAVE_ERROR_xxx), consult
+ *          the definition of flashSaveStatus_e in flash.h for diagnostics
+ */
+flashSaveStatus_e gFlashSaveFlag;
+
+/**
+ * @brief   freeRTOS thread definition stuff
+ */
 osThreadId flashSaveThreadHandle;
 uint32_t flashSaveThreadBuffer[256];
 osStaticThreadDef_t flashSaveThreadControlBlock;
 
+/**
+ * @brief	dataset used for testing the flash module
+*/
 uint8_t byteTest = 0;
 uint16_t halfWordTest = 0;
 uint32_t wordTest = 0;
@@ -34,8 +49,7 @@ double doubleTest = 0;
  * @brief   helper to translate FLASH_Type_Program to memory size
  * @warning	do not modify
  */
-static uint32_t flashDataTypeToSize[] =
-{
+static uint32_t flashDataTypeToSize[] = {
     sizeof(uint8_t),
     sizeof(uint16_t),
     sizeof(uint32_t),
@@ -44,29 +58,35 @@ static uint32_t flashDataTypeToSize[] =
 
 /**
  * @brief	list pf parameters to save into flash
- * @warning	only extend this list but never modify of delete the existing entries
+ * @warning	only extend this list, never modify of delete the existing entries
  *          terminate with {NULL, 0}
  * 
- * @detail  data types with following data sizes are supported
+ * @detail  data types of the following data sizes are supported
  *          FLASH_TYPEPROGRAM_BYTE	        (8 bit)
  *          FLASH_TYPEPROGRAM_HALFWORD	    (16 bit)
  *          FLASH_TYPEPROGRAM_WORD	        (32 bit)
- *          FLASH_TYPEPROGRAM_DOUBLEWORD    (64-bit)
+ *          FLASH_TYPEPROGRAM_DOUBLEWORD    (64-bit) 
  */
-const flashParamEntry_t savedParameters[] =
-{
+const flashParamEntry_t savedParameters[] = {    
     {&gyroOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
     {&gyroOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
     {&gyroOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},
     {&accelOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
     {&accelOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
     {&accelOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},
-    {&byteTest, FLASH_TYPEPROGRAM_BYTE},
-    {&halfWordTest, FLASH_TYPEPROGRAM_HALFWORD},
-    {&wordTest, FLASH_TYPEPROGRAM_WORD},
-    {&doubleWordTest, FLASH_TYPEPROGRAM_DOUBLEWORD},
-    {&floatTest, FLASH_TYPEPROGRAM_WORD},
-    {&doubleTest, FLASH_TYPEPROGRAM_DOUBLEWORD},
+    {NULL, 0}
+};
+
+/**
+ * @brief	for testing only
+ */
+const flashParamEntry_t testParameters[] = {
+    {&byteTest, FLASH_TYPEPROGRAM_BYTE},             //For testing, place at the end before the NULL termination
+    {&halfWordTest, FLASH_TYPEPROGRAM_HALFWORD},     //For testing, place at the end before the NULL termination
+    {&wordTest, FLASH_TYPEPROGRAM_WORD},             //For testing, place at the end before the NULL termination
+    {&doubleWordTest, FLASH_TYPEPROGRAM_DOUBLEWORD}, //For testing, place at the end before the NULL termination
+    {&floatTest, FLASH_TYPEPROGRAM_WORD},            //For testing, place at the end before the NULL termination
+    {&doubleTest, FLASH_TYPEPROGRAM_DOUBLEWORD},     //For testing, place at the end before the NULL termination
     {NULL, 0}
 };
 
@@ -74,8 +94,7 @@ const flashParamEntry_t savedParameters[] =
  * @brief	setting for erasing the flash sector used for storing parameters
  * @warning do not modify
  */
-FLASH_EraseInitTypeDef userSectorErase =
-{
+FLASH_EraseInitTypeDef userSectorErase = {
     FLASH_TYPEERASE_SECTORS, //Erase sectors instead of mass erase
     FLASH_BANK_1,            //Erase flash bank 1
     FLASH_SECTOR,            //Erase the last sector, sector 11 in F405RG is 128kbytes long and starts at 0x080E0000
@@ -83,14 +102,19 @@ FLASH_EraseInitTypeDef userSectorErase =
     FLASH_VOLTAGE_RANGE_3    //Range 3 requires 2.7-3.6v, erases 32 bits at a time, takes about 1 sec for sector 11
 };
 
-uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
+/**
+ * @brief	save the parameter list to FLASH_SECTOR
+ * @param	paramList	list of parameters to save, defaults to savedParameters if NULL is passed
+ */
+uint8_t flashSave(const flashParamEntry_t *paramList)
 {
+    if (paramList == NULL)
+        paramList = savedParameters; //Load default parameter list if no list is specified
     HAL_SuspendTick();
-    paramList = (flashParamEntry_t *) paramList;
-    *flag = FLASH_SAVING;
+    gFlashSaveFlag = FLASH_SAVING;
     if (HAL_FLASH_Unlock() != HAL_OK)
     {
-        *flag = FLASH_SAVE_ERROR_UNLOCK;
+        gFlashSaveFlag = FLASH_SAVE_ERROR_UNLOCK;
         return 1;   //Flash unlock error
     }
     
@@ -100,7 +124,7 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
     if (HAL_FLASHEx_Erase(&userSectorErase, &sectorError) != HAL_OK)
     {
         HAL_FLASH_Lock();
-        *flag = FLASH_SAVE_ERROR_ERASE;
+        gFlashSaveFlag = FLASH_SAVE_ERROR_ERASE;
         return 1; //Flash erase error
     }
 
@@ -113,7 +137,7 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
         if (!IS_FLASH_TYPEPROGRAM(paramList->dataType))
         {
             HAL_FLASH_Lock();
-            *flag = FLASH_SAVE_ERROR_INVALID_DATA_TYPE;
+            gFlashSaveFlag = FLASH_SAVE_ERROR_INVALID_DATA_TYPE;
             return 1; //Invalid dataType
         }
         if (paramList->dataType == FLASH_TYPEPROGRAM_DOUBLEWORD) 
@@ -134,16 +158,22 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 
     HAL_FLASH_Lock();
     if (status != HAL_OK) {
-        *flag = FLASH_SAVE_ERROR_WRITE;
+        gFlashSaveFlag = FLASH_SAVE_ERROR_WRITE;
         return 1; //Flash write error
     }
-    *flag = FLASH_SAVE_READY;
+    gFlashSaveFlag = FLASH_SAVE_READY;
     HAL_ResumeTick();
     return 0;
 }
 
+/**
+ * @brief	load the parameter list from FLASH_SECTOR
+ * @param	paramList	list of parameters to load, defaults to savedParameters if NULL is passed
+ */
 void flashLoad(const flashParamEntry_t *paramList)
 {
+    if(paramList == NULL)
+        paramList = savedParameters;    //Load default parameter list if no list is specified
     static void *flashAddress;
     flashAddress = (void *)FLASH_SECTOR_ADDR;
     while(paramList->data != NULL)
@@ -154,17 +184,19 @@ void flashLoad(const flashParamEntry_t *paramList)
     }
 }
 
+/**
+ * @brief	polls gFlashSaveFlag, saves savedParameters if gFlashSaveFlag is set to FLASH_SAVE
+ */
 void flashSaveThreadFunction(const void *argument)
 {
-    flashSaveFlag = FLASH_SAVE_READY;
-    flashLoad(savedParameters);
+    gFlashSaveFlag = FLASH_SAVE_READY;
     while(1)
     {
         osDelay(1);
-        if(flashSaveFlag == FLASH_SAVE)
+        if(gFlashSaveFlag == FLASH_SAVE)
         {
             HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, GPIO_PIN_SET);
-            flashSave(savedParameters, &flashSaveFlag);
+            flashSave(savedParameters);
             HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, GPIO_PIN_RESET);
         }
     }
