@@ -107,8 +107,8 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
 
     HAL_StatusTypeDef status = HAL_OK;
     static uint32_t flashAddress;
-    static uint64_t tempData;
     flashAddress = FLASH_SECTOR_ADDR;
+    static uint64_t tempData;    
     while ((status == HAL_OK))
     {
         if (!IS_FLASH_TYPEPROGRAM(paramPtr->dataType))
@@ -143,9 +143,22 @@ uint8_t flashSave(const flashParamEntry_t *paramList, uint8_t *flag)
     return 0;
 }
 
+void flashLoad(const flashParamEntry_t *paramList)
+{
+    static void *flashAddress;
+    flashAddress = (void *)FLASH_SECTOR_ADDR;
+    while(paramList->data != NULL)
+    {
+        memcpy(paramList->data, flashAddress, flashDataTypeToSize[paramList->dataType]);
+        paramList++;
+        flashAddress += sizeof(uint64_t);
+    }
+}
+
 void flashSaveThreadFunction(const void *argument)
 {
     flashSaveFlag = FLASH_SAVE_READY;
+    flashLoad(savedParameters);
     while(1)
     {
         osDelay(1);
