@@ -18,13 +18,7 @@
 #include <string.h>
 
 imu_t gIMUdata;
-
-int16_t gyroOffsetX;
-int16_t gyroOffsetY;
-int16_t gyroOffsetZ;
-int16_t accelOffsetX;
-int16_t accelOffsetY;
-int16_t accelOffsetZ;
+imuRaw_t gIMUOffset, imuRawData;
 
 /**
  * @brief	Basic bytewise SPI transmit and receive, with CS pin setting
@@ -90,21 +84,21 @@ uint8_t icm20602Init(void)
     icm20602WriteReg(CONFIG, GYRO_LPF_176HZ);
     icm20602WriteReg(ACCEL_CONFIG2, ACCEL_LPF_218_1);
     //apply sensor measurement range setting
-    icm20602WriteReg(GYRO_CONFIG, ICM20602_GYRO_MEASUREMENT_RANGE << 3); //shift by 3 bits, don't change
-    icm20602WriteReg(ACCEL_CONFIG, ICM20602_ACCEL_MEASUREMENT_RANGE << 3); //shift by 3 bits, don't change
+    icm20602WriteReg(GYRO_CONFIG, ICM20602_GYRO_MEASUREMENT_RANGE << 3);    //shift by 3 bits, don't change
+    icm20602WriteReg(ACCEL_CONFIG, ICM20602_ACCEL_MEASUREMENT_RANGE << 3);  //shift by 3 bits, don't change
     //apply sensor offset setting
-    icm20602WriteReg(XG_OFFS_USRH, (uint8_t)gyroOffsetX >> 8);
-    icm20602WriteReg(XG_OFFS_USRL, (uint8_t)gyroOffsetX);
-    icm20602WriteReg(YG_OFFS_USRH, (uint8_t)gyroOffsetY >> 8);
-    icm20602WriteReg(YG_OFFS_USRL, (uint8_t)gyroOffsetY);
-    icm20602WriteReg(ZG_OFFS_USRH, (uint8_t)gyroOffsetZ >> 8);
-    icm20602WriteReg(ZG_OFFS_USRL, (uint8_t)gyroOffsetZ);
-    icm20602WriteReg(XA_OFFSET_H, (uint8_t)accelOffsetX >> 8);
-    icm20602WriteReg(XA_OFFSET_L, (uint8_t)accelOffsetX);
-    icm20602WriteReg(YA_OFFSET_H, (uint8_t)accelOffsetY >> 8);
-    icm20602WriteReg(YA_OFFSET_L, (uint8_t)accelOffsetY);
-    icm20602WriteReg(ZA_OFFSET_H, (uint8_t)accelOffsetZ >> 8);
-    icm20602WriteReg(ZA_OFFSET_L, (uint8_t)accelOffsetZ);
+    icm20602WriteReg(XG_OFFS_USRH, gIMUOffset.gyroData[xAxis] >> 8);
+    icm20602WriteReg(XG_OFFS_USRL, gIMUOffset.gyroData[xAxis] & 0xFF);
+    icm20602WriteReg(YG_OFFS_USRH, gIMUOffset.gyroData[yAxis] >> 8);
+    icm20602WriteReg(YG_OFFS_USRL, gIMUOffset.gyroData[yAxis] & 0xFF);
+    icm20602WriteReg(ZG_OFFS_USRH, gIMUOffset.gyroData[zAxis] >> 8);
+    icm20602WriteReg(ZG_OFFS_USRL, gIMUOffset.gyroData[zAxis] & 0xFF);
+    icm20602WriteReg(XA_OFFSET_H, gIMUOffset.accData[xAxis] >> 8);
+    icm20602WriteReg(XA_OFFSET_L, gIMUOffset.accData[xAxis] & 0xFF);
+    icm20602WriteReg(YA_OFFSET_H, gIMUOffset.accData[yAxis] >> 8);
+    icm20602WriteReg(YA_OFFSET_L, gIMUOffset.accData[yAxis] & 0xFF);
+    icm20602WriteReg(ZA_OFFSET_H, gIMUOffset.accData[zAxis] >> 8);
+    icm20602WriteReg(ZA_OFFSET_L, gIMUOffset.accData[zAxis] & 0xFF);
     return 1;
 }
 
@@ -115,24 +109,23 @@ void icm20602Update(void)
 {
     static uint8_t txBuffer[ICM20602_UPDATE_BUFFER_SIZE];
     static uint8_t rxBuffer[ICM20602_UPDATE_BUFFER_SIZE];
-    static int16_t temp;    //temporary storage
     for (uint8_t i = 0; i < ICM20602_UPDATE_BUFFER_SIZE - 1; i++)
     {
         txBuffer[i] = 0x80 | (i + ACCEL_XOUT_H);
     }
     icm20602TransmitReceive(txBuffer, rxBuffer, ICM20602_UPDATE_BUFFER_SIZE);
-    temp = (rxBuffer[1]) << 8 | rxBuffer[2];
-    gIMUdata.accData[xAxis] = temp / 32768.0 * (ICM20602_ACCEL_MEASUREMENT_RANGE + 1) * 2;
-    temp = (rxBuffer[3]) << 8 | rxBuffer[4];
-    gIMUdata.accData[yAxis] = temp / 32768.0 * (ICM20602_ACCEL_MEASUREMENT_RANGE + 1) * 2;
-    temp = (rxBuffer[5]) << 8 | rxBuffer[6];
-    gIMUdata.accData[zAxis] = temp / 32768.0 * (ICM20602_ACCEL_MEASUREMENT_RANGE + 1) * 2;
-    temp = (rxBuffer[7]) << 8 | rxBuffer[8];
-    gIMUdata.tempData = temp * ICM20602_TEMP_SENSITIVITY + ICM20602_TEMP_OFFSET;
-    temp = (rxBuffer[9]) << 8 | rxBuffer[10];
-    gIMUdata.gyroData[xAxis] = temp / 32768.0 * (ICM20602_GYRO_MEASUREMENT_RANGE + 1) * 250;
-    temp = (rxBuffer[11]) << 8 | rxBuffer[12];
-    gIMUdata.gyroData[yAxis] = temp / 32768.0 * (ICM20602_GYRO_MEASUREMENT_RANGE + 1) * 250;
-    temp = (rxBuffer[13]) << 8 | rxBuffer[14];
-    gIMUdata.gyroData[zAxis] = temp / 32768.0 * (ICM20602_GYRO_MEASUREMENT_RANGE + 1) * 250;
+    imuRawData.accData[xAxis] = (rxBuffer[1]) << 8 | rxBuffer[2];
+    gIMUdata.accData[xAxis] = imuRawData.accData[xAxis] / 32768.0 * (ICM20602_ACCEL_MEASUREMENT_RANGE + 1) * 2;
+    imuRawData.accData[yAxis] = (rxBuffer[3]) << 8 | rxBuffer[4];
+    gIMUdata.accData[yAxis] = imuRawData.accData[yAxis] / 32768.0 * (ICM20602_ACCEL_MEASUREMENT_RANGE + 1) * 2;
+    imuRawData.accData[zAxis] = (rxBuffer[5]) << 8 | rxBuffer[6];
+    gIMUdata.accData[zAxis] = imuRawData.accData[zAxis] / 32768.0 * (ICM20602_ACCEL_MEASUREMENT_RANGE + 1) * 2;
+    imuRawData.tempData = (rxBuffer[7]) << 8 | rxBuffer[8];
+    gIMUdata.tempData = imuRawData.tempData * ICM20602_TEMP_SENSITIVITY + ICM20602_TEMP_OFFSET;
+    imuRawData.gyroData[xAxis] = (rxBuffer[9]) << 8 | rxBuffer[10];
+    gIMUdata.gyroData[xAxis] = imuRawData.gyroData[xAxis] / 32768.0 * (ICM20602_GYRO_MEASUREMENT_RANGE + 1) * 250;
+    imuRawData.gyroData[yAxis] = (rxBuffer[11]) << 8 | rxBuffer[12];
+    gIMUdata.gyroData[yAxis] = imuRawData.gyroData[yAxis] / 32768.0 * (ICM20602_GYRO_MEASUREMENT_RANGE + 1) * 250;
+    imuRawData.gyroData[zAxis] = (rxBuffer[13]) << 8 | rxBuffer[14];
+    gIMUdata.gyroData[zAxis] = imuRawData.gyroData[zAxis] / 32768.0 * (ICM20602_GYRO_MEASUREMENT_RANGE + 1) * 250;
 }

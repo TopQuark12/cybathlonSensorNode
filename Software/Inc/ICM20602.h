@@ -5,19 +5,19 @@
 #define ICM20602_TIMEOUT_TICKS	            100
 #define ICM20602_UPDATE_BUFFER_SIZE	        15
 
-#define ICM20602_GYRO_MEASUREMENT_RANGE     GYRO_FS_500DPS
+#define ICM20602_GYRO_MEASUREMENT_RANGE     GYRO_FS_2000DPS
 #define ICM20602_ACCEL_MEASUREMENT_RANGE    ACCEL_FS_16G
 
 #define ICM20602_TEMP_SENSITIVITY	        (float) 1/326.8
 #define ICM20602_TEMP_OFFSET	            (float) 25.0
 
 //set to global enabling flash.c to save and load these values from flash
-extern int16_t gyroOffsetX;
-extern int16_t gyroOffsetY;
-extern int16_t gyroOffsetZ;
-extern int16_t accelOffsetX;
-extern int16_t accelOffsetY;
-extern int16_t accelOffsetZ;
+// extern int16_t gyroOffsetX;
+// extern int16_t gyroOffsetY;
+// extern int16_t gyroOffsetZ;
+// extern int16_t accelOffsetX;
+// extern int16_t accelOffsetY;
+// extern int16_t accelOffsetZ;
 
 //icm20602 register address list
 typedef enum
@@ -50,9 +50,9 @@ typedef enum
     WHO_AM_I = 0x75,
     XA_OFFSET_H = 0x77,
     XA_OFFSET_L,
-    YA_OFFSET_H,
+    YA_OFFSET_H = 0x7A,
     YA_OFFSET_L,
-    ZA_OFFSET_H,
+    ZA_OFFSET_H = 0x7D,
     ZA_OFFSET_L,
 } icm20602Reg;
 
@@ -114,6 +114,15 @@ typedef struct imu_t
     float gyroData[3]; //unit: dps
     float tempData;    //unit: deg C
 } imu_t;
+
+typedef struct imuRaw_t
+{
+    int16_t accData[3];
+    int16_t gyroData[3];
+    int16_t tempData;
+} imuRaw_t;
+
+extern imuRaw_t gIMUOffset;
 
 uint8_t icm20602Init(void);
 void icm20602Update(void);
