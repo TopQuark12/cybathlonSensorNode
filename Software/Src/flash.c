@@ -192,7 +192,7 @@ void flashSaveThreadFunction(const void *argument)
     gFlashSaveFlag = FLASH_SAVE_READY;
     while(1)
     {
-        osDelay(1);
+        osDelay(5);
         if(gFlashSaveFlag == FLASH_SAVE)
         {
             HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, GPIO_PIN_SET);
