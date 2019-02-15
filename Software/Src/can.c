@@ -48,13 +48,37 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "FreeRTOS.h"
 #include "can.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_can.h"
+#include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
+CAN_HandleTypeDef hcan1;
+CAN_FilterTypeDef canAllPassFilter =
+{
+  0,
+  0,
+  0,
+  0,
+  CAN_FILTER_FIFO0,
+  0,
+  CAN_FILTERMODE_IDMASK,
+  CAN_FILTERSCALE_32BIT,
+  ENABLE,
+  14
+};
 
+CAN_RxHeaderTypeDef canRxFrame;
+uint8_t canRxBuffer[8];
+
+CAN_TxHeaderTypeDef canTxFrame;
+uint8_t canTxBuffer[8];
+uint32_t *canTxMailboxUsed;
+uint32_t canDefaultID = 0x200;
 /* USER CODE END 0 */
 
-CAN_HandleTypeDef hcan1;
 
 /* CAN1 init function */
 void MX_CAN1_Init(void)
@@ -76,7 +100,6 @@ void MX_CAN1_Init(void)
   {
     Error_Handler();
   }
-
 }
 
 void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
@@ -127,7 +150,7 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
   /* USER CODE END CAN1_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_CAN1_CLK_DISABLE();
+    __HAL_RCC_CAN1_CLK_DISABLE(); 
   
     /**CAN1 GPIO Configuration    
     PA11     ------> CAN1_RX
@@ -147,7 +170,44 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+  while (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))
+  {
+    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &canRxFrame, canRxBuffer);
+    canRxHandler();
+  }
+}
 
+void canIDInit(void)
+{
+  canDefaultID = 0x200;     // Placeholder for default CAN ID; Should be replaced by reading flash memory later
+  canTxFrame.StdId = canDefaultID;
+  canTxFrame.IDE = CAN_ID_STD;
+  canTxFrame.RTR = CAN_RTR_DATA;
+  canTxFrame.DLC = 8;
+  canTxFrame.TransmitGlobalTime = DISABLE;
+}
+
+void canRxHandler(void)
+{
+  return;
+}
+
+void canTxMessageWithID(uint32_t canID)
+{
+  canTxFrame.StdId = canID;
+  if (HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed) != HAL_OK)
+  {
+    /* Transmission request Error */
+    Error_Handler();
+  }
+}
+
+void canTxMessage(void)
+{
+  canTxMessageWithID(canDefaultID);
+}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

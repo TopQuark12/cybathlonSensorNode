@@ -61,6 +61,15 @@
 /* USER CODE END Includes */
 
 extern CAN_HandleTypeDef hcan1;
+extern CAN_FilterTypeDef canAllPassFilter;
+
+extern CAN_RxHeaderTypeDef canRxFrame;
+extern uint8_t canRxBuffer[8];
+
+extern CAN_TxHeaderTypeDef canTxFrame;
+extern uint8_t canTxBuffer[8];
+extern uint32_t *canTxMailboxUsed;
+extern uint32_t canDefaultID;
 
 /* USER CODE BEGIN Private defines */
 
@@ -69,7 +78,11 @@ extern CAN_HandleTypeDef hcan1;
 void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
+void canIDInit(void);
+void canRxHandler(void);
+void canTxMessageWithID(uint32_t canID);
+void canTxMessage(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
