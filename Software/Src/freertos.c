@@ -260,10 +260,12 @@ void startCanTx(void const * argument)
     HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
 
-    canTxMessageWithID(canDefaultID | CAN_ACCEL_MASK);
-    osDelay(200);
-    canTxMessageWithID(canDefaultID | CAN_GYRO_MASK);
-    osDelay(200);
+    canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
+    osDelay(50);
+    canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
+    osDelay(50);
+    canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]);
+    osDelay(50);
 
   }
   /* USER CODE END startCanTx */

@@ -53,6 +53,7 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_can.h"
 #include "cmsis_os.h"
+#include "string.h"
 
 /* USER CODE BEGIN 0 */
 CAN_HandleTypeDef hcan1;
@@ -194,9 +195,10 @@ void canRxHandler(void)
   return;
 }
 
-void canTxMessageWithID(uint32_t canID)
+void canTxMessageWithID(uint32_t canID, uint8_t data[])
 {
   canTxFrame.StdId = canID;
+  memcpy(canTxBuffer, data, 8);
   if (HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed) != HAL_OK)
   {
     /* Transmission request Error */
@@ -204,10 +206,19 @@ void canTxMessageWithID(uint32_t canID)
   }
 }
 
-void canTxMessage(void)
+void canTxMessage(uint8_t data[])
 {
-  canTxMessageWithID(canDefaultID);
+  memcpy(canTxBuffer, data, 8);
+  canTxMessageWithID(canDefaultID, canTxBuffer);
 }
+
+void canTxFloatMessageWithID(uint32_t canID, float f1, float f2)
+{
+  memcpy(canTxBuffer, &f1, 4);
+  memcpy(canTxBuffer+4, &f2, 4);
+  canTxMessageWithID(canID, canTxBuffer);
+}
+
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

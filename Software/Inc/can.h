@@ -81,8 +81,9 @@ void MX_CAN1_Init(void);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 void canIDInit(void);
 void canRxHandler(void);
-void canTxMessageWithID(uint32_t canID);
-void canTxMessage(void);
+void canTxMessageWithID(uint32_t canID, uint8_t data[]);
+void canTxMessage(uint8_t data[]);
+void canTxFloatMessageWithID(uint32_t canID, float f1, float f2);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

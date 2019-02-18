@@ -103,6 +103,9 @@ typedef struct imu_t
     float tempData;    //unit: deg C
 } imu_t;
 
+//allow access of IMU data for can tx
+extern imu_t gIMUdata;
+
 uint8_t icm20602Init(void);
 void icm20602Update(void);
 
