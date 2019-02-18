@@ -208,8 +208,7 @@ void canTxMessageWithID(uint32_t canID, uint8_t data[])
 
 void canTxMessage(uint8_t data[])
 {
-  memcpy(canTxBuffer, data, 8);
-  canTxMessageWithID(canDefaultID, canTxBuffer);
+  canTxMessageWithID(canDefaultID, data);
 }
 
 void canTxFloatMessageWithID(uint32_t canID, float f1, float f2)
@@ -217,6 +216,11 @@ void canTxFloatMessageWithID(uint32_t canID, float f1, float f2)
   memcpy(canTxBuffer, &f1, 4);
   memcpy(canTxBuffer+4, &f2, 4);
   canTxMessageWithID(canID, canTxBuffer);
+}
+
+void canTxFloatMessage(float f1, float f2)
+{
+  canTxFloatMessageWithID(canDefaultID, f1, f2);
 }
 
 /* USER CODE END 1 */
