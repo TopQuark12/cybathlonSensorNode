@@ -17,6 +17,7 @@
 #include <string.h>
 #include "flash.h"
 #include "ICM20602.h"
+#include "can.h"
 
 /**
  * @brief	flag controlling the save funtion of the flash module
@@ -68,6 +69,7 @@ static uint32_t flashDataTypeToSize[] = {
  *          FLASH_TYPEPROGRAM_DOUBLEWORD    (64-bit) 
  */
 const flashParamEntry_t savedParameters[] = {    
+    {&canDefaultID, FLASH_TYPEPROGRAM_WORD},
     {&gyroOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
     {&gyroOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
     {&gyroOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},

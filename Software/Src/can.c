@@ -182,7 +182,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 void canIDInit(void)
 {
-  canDefaultID = 0x200;     // Placeholder for default CAN ID; Should be replaced by reading flash memory later
   canTxFrame.StdId = canDefaultID;
   canTxFrame.IDE = CAN_ID_STD;
   canTxFrame.RTR = CAN_RTR_DATA;
