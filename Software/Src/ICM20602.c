@@ -123,9 +123,9 @@ void icm20602Update(void)
     imuRawData.tempData = (rxBuffer[7]) << 8 | rxBuffer[8];
     gIMUdata.tempData = imuRawData.tempData * ICM20602_TEMP_SENSITIVITY + ICM20602_TEMP_OFFSET;
     imuRawData.gyroData[xAxis] = (rxBuffer[9]) << 8 | rxBuffer[10];
-    gIMUdata.gyroData[xAxis] = imuRawData.gyroData[xAxis] / 32768.0 * (1 << ICM20602_GYRO_MEASUREMENT_RANGE) * 250;
+    gIMUdata.gyroData[xAxis] = imuRawData.gyroData[xAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
     imuRawData.gyroData[yAxis] = (rxBuffer[11]) << 8 | rxBuffer[12];
-    gIMUdata.gyroData[yAxis] = imuRawData.gyroData[yAxis] / 32768.0 * (1 << ICM20602_GYRO_MEASUREMENT_RANGE) * 250;
+    gIMUdata.gyroData[yAxis] = imuRawData.gyroData[yAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
     imuRawData.gyroData[zAxis] = (rxBuffer[13]) << 8 | rxBuffer[14];
-    gIMUdata.gyroData[zAxis] = imuRawData.gyroData[zAxis] / 32768.0 * (1 << ICM20602_GYRO_MEASUREMENT_RANGE) * 250;
+    gIMUdata.gyroData[zAxis] = imuRawData.gyroData[zAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
 }
