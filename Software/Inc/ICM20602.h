@@ -115,6 +115,7 @@ typedef struct imu_t
     float tempData;    //unit: deg C
 } imu_t;
 
+
 typedef struct imuRaw_t
 {
     int16_t accData[3];
@@ -122,6 +123,7 @@ typedef struct imuRaw_t
     int16_t tempData;
 } imuRaw_t;
 
+extern imu_t gIMUdata;
 extern imuRaw_t gIMUOffset;
 
 uint8_t icm20602Init(void);

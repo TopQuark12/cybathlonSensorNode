@@ -17,6 +17,7 @@
 #include <string.h>
 #include "flash.h"
 #include "ICM20602.h"
+#include "can.h"
 
 /**
  * @brief	flag controlling the save funtion of the flash module
@@ -67,7 +68,9 @@ static uint32_t flashDataTypeToSize[] = {
  *          FLASH_TYPEPROGRAM_WORD	        (32 bit)
  *          FLASH_TYPEPROGRAM_DOUBLEWORD    (64-bit) 
  */
+
 const flashParamEntry_t savedParameters[] = {
+    {&canDefaultID, FLASH_TYPEPROGRAM_WORD},
     {&gIMUOffset.gyroData[xAxis], FLASH_TYPEPROGRAM_HALFWORD},
     {&gIMUOffset.gyroData[yAxis], FLASH_TYPEPROGRAM_HALFWORD},
     {&gIMUOffset.gyroData[zAxis], FLASH_TYPEPROGRAM_HALFWORD},

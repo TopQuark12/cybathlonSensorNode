@@ -143,6 +143,8 @@ int main(void)
   gFlashSaveFlag = FLASH_SAVE_READY;    //Setup flash parameter saving and loading
   flashLoad(NULL);                      //Load default set of parameters
 
+  canIDInit();    // Initialize can ID
+
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
