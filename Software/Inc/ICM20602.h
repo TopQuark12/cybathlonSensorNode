@@ -124,7 +124,7 @@ typedef struct imuRaw_t
 } imuRaw_t;
 
 extern imu_t gIMUdata;
-extern imuRaw_t gIMUOffset;
+extern imuRaw_t gIMUOffset, imuRawData;
 
 uint8_t icm20602Init(void);
 void icm20602Update(void);

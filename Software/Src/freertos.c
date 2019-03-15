@@ -260,10 +260,12 @@ void startCanTx(void const * argument)
     HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
 
-    canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
-    canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
-    canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]);
-    osDelay(1);
+    // canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
+    // canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
+    // canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]); 
+    canTxInt16MessageWithID(canDefaultID | CAN_ACCL_MASK, imuRawData.accData[0], imuRawData.accData[1], imuRawData.accData[2], 0);
+    canTxInt16MessageWithID(canDefaultID | CAN_GYRO_MASK, imuRawData.gyroData[0], imuRawData.gyroData[1], imuRawData.gyroData[2], 0);
+    osDelay(10);
 
   }
   /* USER CODE END startCanTx */

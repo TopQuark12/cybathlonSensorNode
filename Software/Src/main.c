@@ -157,6 +157,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  sd_test();
+  sd_test();
+  sd_test();
   while (1)
   {
     /* USER CODE END WHILE */

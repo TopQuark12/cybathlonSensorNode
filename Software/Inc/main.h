@@ -109,9 +109,11 @@ void Error_Handler(void);
 #define BUTTON_SEN_Pin GPIO_PIN_7
 #define BUTTON_SEN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define CAN_IMU_X_MASK 0x010
-#define CAN_IMU_Y_MASK 0x020
-#define CAN_IMU_Z_MASK 0x030
+// #define CAN_IMU_X_MASK 0x010
+// #define CAN_IMU_Y_MASK 0x020
+// #define CAN_IMU_Z_MASK 0x030
+#define CAN_ACCL_MASK 0x010
+#define CAN_GYRO_MASK 0x020
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
