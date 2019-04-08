@@ -90,6 +90,8 @@
 static uint16_t magRxData;
 static uint16_t magTxData;
 
+static int prior_delay = 1;
+
 /* USER CODE END Variables */
 osThreadId canTxThreadHandle;
 uint32_t canTxThreadBuffer[256];
@@ -223,21 +225,12 @@ void startCanTx(void const * argument)
 
   /* USER CODE BEGIN startCanTx */
 
-  //BSP_SD_Init();
-  //sd_test();
-
   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
   magRxData = 0;
   magTxData = 0;
-
-  // spiImuTxData[0] = 107;
-  // spiImuTxData[1] = 0b00000001;
-  // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-  // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 2, HAL_MAX_DELAY);
-  // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
 
   icm20602Init();
   //flashInit();
@@ -248,10 +241,6 @@ void startCanTx(void const * argument)
   for (;;)
   {
 
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-    // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
-
     icm20602Update();
 
     HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, 1-HAL_GPIO_ReadPin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin));
@@ -260,12 +249,11 @@ void startCanTx(void const * argument)
     HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
 
-    // canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
-    // canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
-    // canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]); 
+    prior_delay = (canDefaultID & 0x00F) < 5 ? canDefaultID & 0x00F : 0;
+    osDelay(prior_delay);
     canTxInt16MessageWithID(canDefaultID | CAN_ACCL_MASK, imuRawData.accData[0], imuRawData.accData[1], imuRawData.accData[2], 0);
     canTxInt16MessageWithID(canDefaultID | CAN_GYRO_MASK, imuRawData.gyroData[0], imuRawData.gyroData[1], imuRawData.gyroData[2], 0);
-    osDelay(10);
+    osDelay(5 - prior_delay);
 
   }
   /* USER CODE END startCanTx */
