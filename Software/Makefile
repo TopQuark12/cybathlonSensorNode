@@ -86,7 +86,8 @@ Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c \
 Src/sd_card.c \
 Middlewares/Third_Party/FatFs/src/option/ccsbcs.c \
 Src/ICM20602.c \
-Src/flash.c
+Src/flash.c \
+Src/MA730.c
 
 # ASM sources
 ASM_SOURCES =  \

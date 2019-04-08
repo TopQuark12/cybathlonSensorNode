@@ -65,6 +65,7 @@
 #include "sd_card.h"
 #include "ICM20602.h"
 #include "flash.h"
+#include "MA730.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,7 +88,7 @@
 
 // static uint8_t spiImuTxData[16];
 // static uint8_t spiImuRxData[16];
-static uint16_t magRxData;
+uint16_t magRxData;
 static uint16_t magTxData;
 
 static int prior_delay = 1;
@@ -245,9 +246,7 @@ void startCanTx(void const * argument)
 
     HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, 1-HAL_GPIO_ReadPin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin));
 
-    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
-    HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
+    magRxData = ma730ReadAngle();
 
     prior_delay = (canDefaultID & 0x00F) < 5 ? canDefaultID & 0x00F : 0;
     osDelay(prior_delay);
