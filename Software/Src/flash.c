@@ -17,6 +17,7 @@
 #include <string.h>
 #include "flash.h"
 #include "ICM20602.h"
+#include "can.h"
 
 /**
  * @brief	flag controlling the save funtion of the flash module
@@ -67,13 +68,15 @@ static uint32_t flashDataTypeToSize[] = {
  *          FLASH_TYPEPROGRAM_WORD	        (32 bit)
  *          FLASH_TYPEPROGRAM_DOUBLEWORD    (64-bit) 
  */
-const flashParamEntry_t savedParameters[] = {    
-    {&gyroOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
-    {&gyroOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
-    {&gyroOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},
-    {&accelOffsetX, FLASH_TYPEPROGRAM_HALFWORD},
-    {&accelOffsetY, FLASH_TYPEPROGRAM_HALFWORD},
-    {&accelOffsetZ, FLASH_TYPEPROGRAM_HALFWORD},
+
+const flashParamEntry_t savedParameters[] = {
+    {&canDefaultID, FLASH_TYPEPROGRAM_WORD},
+    {&gIMUOffset.gyroData[xAxis], FLASH_TYPEPROGRAM_HALFWORD},
+    {&gIMUOffset.gyroData[yAxis], FLASH_TYPEPROGRAM_HALFWORD},
+    {&gIMUOffset.gyroData[zAxis], FLASH_TYPEPROGRAM_HALFWORD},
+    {&gIMUOffset.accData[xAxis], FLASH_TYPEPROGRAM_HALFWORD},
+    {&gIMUOffset.accData[yAxis], FLASH_TYPEPROGRAM_HALFWORD},
+    {&gIMUOffset.accData[zAxis], FLASH_TYPEPROGRAM_HALFWORD},
     {NULL, 0}
 };
 
@@ -192,7 +195,7 @@ void flashSaveThreadFunction(const void *argument)
     gFlashSaveFlag = FLASH_SAVE_READY;
     while(1)
     {
-        osDelay(1);
+        osDelay(5);
         if(gFlashSaveFlag == FLASH_SAVE)
         {
             HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, GPIO_PIN_SET);

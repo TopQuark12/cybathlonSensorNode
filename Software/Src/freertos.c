@@ -65,6 +65,7 @@
 #include "sd_card.h"
 #include "ICM20602.h"
 #include "flash.h"
+#include "MA730.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,44 +88,19 @@
 
 // static uint8_t spiImuTxData[16];
 // static uint8_t spiImuRxData[16];
-static uint16_t magRxData;
+uint16_t magRxData;
 static uint16_t magTxData;
 
-static CAN_FilterTypeDef canAllPassFilter =
-{
-  0,
-  0,
-  0,
-  0,
-  CAN_FILTER_FIFO0,
-  0,
-  CAN_FILTERMODE_IDMASK,
-  CAN_FILTERSCALE_32BIT,
-  ENABLE,
-  14
-};
-
-static CAN_RxHeaderTypeDef canRxFrame;
-static uint8_t canRxBuffer[8];
-
-static CAN_TxHeaderTypeDef canTxFrame;
-static uint8_t canTxBuffer[8];
-static uint32_t *canTxMailboxUsed;
+static int prior_delay = 1;
 
 /* USER CODE END Variables */
 osThreadId canTxThreadHandle;
-uint32_t canTxThreadBuffer[ 256 ];
+uint32_t canTxThreadBuffer[256];
 osStaticThreadDef_t canTxThreadControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-  while (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))
-  {
-    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &canRxFrame, canRxBuffer);
-  }
-}
+
 /* USER CODE END FunctionPrototypes */
 
 void startCanTx(void const * argument);
@@ -220,13 +196,12 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of canTxThread */
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+
   osThreadStaticDef(canTxThread, startCanTx, osPriorityNormal, 0, 256, canTxThreadBuffer, &canTxThreadControlBlock);
   canTxThreadHandle = osThreadCreate(osThread(canTxThread), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
   osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityAboveNormal, 
                     0, 256, flashSaveThreadBuffer, &flashSaveThreadControlBlock);
   flashSaveThreadHandle = osThreadCreate(osThread(flashSaveThread), NULL);
@@ -251,9 +226,6 @@ void startCanTx(void const * argument)
 
   /* USER CODE BEGIN startCanTx */
 
-  //BSP_SD_Init();
-  //sd_test();
-
   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
@@ -261,55 +233,26 @@ void startCanTx(void const * argument)
   magRxData = 0;
   magTxData = 0;
 
-  // spiImuTxData[0] = 107;
-  // spiImuTxData[1] = 0b00000001;
-  // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-  // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 2, HAL_MAX_DELAY);
-  // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
-
   icm20602Init();
   //flashInit();
 
   osDelay(500);
 
-  // spiImuTxData[0] = 59 | 0b10000000;
-  // spiImuTxData[1] = 60 | 0b10000000;
-  // spiImuTxData[2] = 61 | 0b10000000;
-  // spiImuTxData[3] = 62 | 0b10000000;
-  // spiImuTxData[4] = 63 | 0b10000000;
-  // spiImuTxData[5] = 64 | 0b10000000;
-  // spiImuTxData[6] = 65 | 0b10000000;
-  // spiImuTxData[7] = 66 | 0b10000000;
-  // spiImuTxData[8] = 67 | 0b10000000;
-  // spiImuTxData[9] = 68 | 0b10000000;
-  // spiImuTxData[10] = 69 | 0b10000000;
-  // spiImuTxData[11] = 70 | 0b10000000;
-  // spiImuTxData[12] = 71 | 0b10000000;
-  // spiImuTxData[13] = 72 | 0b10000000;
-
-  canTxFrame.StdId = 0x200;
-  canTxFrame.IDE = CAN_ID_STD;
-  canTxFrame.RTR = CAN_RTR_DATA;
-  canTxFrame.DLC = 8;
-  canTxFrame.TransmitGlobalTime = DISABLE;
-
   /* Infinite loop */
   for (;;)
   {
 
-    HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed);
-
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-    // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
-
     icm20602Update();
 
-    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 0);
-    HAL_SPI_TransmitReceive(&hspi2, (uint8_t *)&magTxData, (uint8_t *)&magRxData, 1, HAL_MAX_DELAY);
-    HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, 1);
+    HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, 1-HAL_GPIO_ReadPin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin));
 
-    osDelay(1);
+    magRxData = ma730ReadAngle();
+
+    prior_delay = (canDefaultID & 0x00F) < 5 ? canDefaultID & 0x00F : 0;
+    osDelay(prior_delay);
+    canTxInt16MessageWithID(canDefaultID | CAN_ACCL_MASK, imuRawData.accData[0], imuRawData.accData[1], imuRawData.accData[2], 0);
+    canTxInt16MessageWithID(canDefaultID | CAN_GYRO_MASK, imuRawData.gyroData[0], imuRawData.gyroData[1], imuRawData.gyroData[2], 0);
+    osDelay(5 - prior_delay);
 
   }
   /* USER CODE END startCanTx */
