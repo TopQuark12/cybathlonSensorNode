@@ -56,6 +56,13 @@
 #include "string.h"
 
 /* USER CODE BEGIN 0 */
+#include "task.h"
+#include "ICM20602.h"
+
+TaskHandle_t canTxThreadHandle;
+uint32_t canTxThreadStack[256];
+StaticTask_t canTxThreadTCB;
+
 CAN_HandleTypeDef hcan1;
 CAN_FilterTypeDef canAllPassFilter =
 {
@@ -171,6 +178,32 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+
+void canTxThreadFunc(void const *argument) 
+{
+  HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+
+  icm20602Init();
+
+  osDelay(500);
+
+  /* Infinite loop */
+  for (;;)
+  {
+
+    icm20602Update();
+
+    osDelay(1);
+  }
+}
+
+void startCanTx(void const *argument)
+{
+  canTxThreadHandle = xTaskCreateStatic((TaskFunction_t)canTxThreadFunc, "canTxThread", 256, NULL, 3, canTxThreadStack, &canTxThreadTCB);
+}
+
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
   while (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))

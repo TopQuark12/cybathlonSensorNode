@@ -34,7 +34,7 @@ flashSaveStatus_e gFlashSaveFlag;
  */
 osThreadId flashSaveThreadHandle;
 uint32_t flashSaveThreadBuffer[256];
-osStaticThreadDef_t flashSaveThreadControlBlock;
+StaticTask_t flashSaveThreadControlBlock;
 
 /**
  * @brief	dataset used for testing the flash module

@@ -66,6 +66,7 @@
 #include "ICM20602.h"
 #include "flash.h"
 #include "MA730.h"
+//#include "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,12 +90,12 @@
 // static uint8_t spiImuTxData[16];
 // static uint8_t spiImuRxData[16];
 uint16_t magRxData;
-static uint16_t magTxData;
+//static uint16_t magTxData;
 
 /* USER CODE END Variables */
-osThreadId canTxThreadHandle;
-uint32_t canTxThreadBuffer[256];
-osStaticThreadDef_t canTxThreadControlBlock;
+// osThreadId canTxThreadHandle;
+// uint32_t canTxThreadBuffer[256];
+// osStaticThreadDef_t canTxThreadControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -197,10 +198,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
-  osThreadStaticDef(canTxThread, startCanTx, osPriorityNormal, 0, 256, canTxThreadBuffer, &canTxThreadControlBlock);
-  canTxThreadHandle = osThreadCreate(osThread(canTxThread), NULL);
+  // osThreadStaticDef(canTxThread, startCanTx, osPriorityNormal, 0, 256, canTxThreadBuffer, &canTxThreadControlBlock);
+  // canTxThreadHandle = osThreadCreate(osThread(canTxThread), NULL);
+  startCanTx(NULL);
 
-  osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityAboveNormal, 
+  osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityAboveNormal,
                     0, 256, flashSaveThreadBuffer, &flashSaveThreadControlBlock);
   flashSaveThreadHandle = osThreadCreate(osThread(flashSaveThread), NULL);
   /* USER CODE END RTOS_THREADS */
@@ -217,56 +219,38 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_startCanTx */
-void startCanTx(void const * argument)
-{
-  /* init code for FATFS */
-  //MX_FATFS_Init();
+// void startCanTx(void const * argument)
+// {
+//   /* init code for FATFS */
 
-  /* USER CODE BEGIN startCanTx */
+//   /* USER CODE BEGIN startCanTx */
 
-  //BSP_SD_Init();
-  //sd_test();
+//   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
+//   HAL_CAN_Start(&hcan1);
+//   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
-  HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
-  HAL_CAN_Start(&hcan1);
-  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+//   icm20602Init();
 
-  magRxData = 0;
-  magTxData = 0;
+//   osDelay(500);
 
-  // spiImuTxData[0] = 107;
-  // spiImuTxData[1] = 0b00000001;
-  // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-  // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 2, HAL_MAX_DELAY);
-  // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
+//   /* Infinite loop */
+//   for (;;)
+//   {
 
-  icm20602Init();
-  //flashInit();
+//     icm20602Update();
 
-  osDelay(500);
+//     HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, 1 - HAL_GPIO_ReadPin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin));
 
-  /* Infinite loop */
-  for (;;)
-  {
+//     magRxData = ma730ReadAngle();
 
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 0);
-    // HAL_SPI_TransmitReceive(&hspi1, spiImuTxData, spiImuRxData, 15, HAL_MAX_DELAY);
-    // HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin, 1);
+//     canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
+//     canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
+//     canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]);
+//     osDelay(1);
 
-    icm20602Update();
-
-    HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, 1-HAL_GPIO_ReadPin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin));
-
-    magRxData = ma730ReadAngle();
-
-    canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
-    canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
-    canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]);
-    osDelay(1);
-
-  }
-  /* USER CODE END startCanTx */
-}
+//   }
+//   /* USER CODE END startCanTx */
+// }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */

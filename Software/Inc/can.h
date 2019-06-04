@@ -85,6 +85,7 @@ void canTxMessageWithID(uint32_t canID, uint8_t data[]);
 void canTxMessage(uint8_t data[]);
 void canTxFloatMessageWithID(uint32_t canID, float f1, float f2);
 void canTxFloatMessage(float f1, float f2);
+void startCanTx(void const *argument);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

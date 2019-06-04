@@ -67,7 +67,7 @@ void icm20602WriteReg(uint8_t addr, uint8_t data)
 /**
  * @brief	initialize the ICM20602 sensor
  * @return	return 0 if ICM20602 not dected
- *          return 1 if ICM20602 detected and initialize
+ *          return 1 if ICM20602 detected and initialized
  */
 uint8_t icm20602Init(void)
 {
