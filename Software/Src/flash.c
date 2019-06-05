@@ -19,6 +19,10 @@
 #include "ICM20602.h"
 #include "can.h"
 
+TaskHandle_t flashSaveThreadHandle;
+uint32_t flashSaveThreadStack[256];
+StaticTask_t flashSaveThreadTCB;
+
 /**
  * @brief	flag controlling the save funtion of the flash module
  * @usage	set to 1 (FLASH_SAVE) to start a save operation, can be set through debug interface
@@ -195,7 +199,7 @@ void flashSaveThreadFunction(const void *argument)
     gFlashSaveFlag = FLASH_SAVE_READY;
     while(1)
     {
-        osDelay(5);
+        osDelay(50);
         if(gFlashSaveFlag == FLASH_SAVE)
         {
             HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, GPIO_PIN_SET);
@@ -203,4 +207,10 @@ void flashSaveThreadFunction(const void *argument)
             HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, GPIO_PIN_RESET);
         }
     }
+}
+
+void startFlashSave(void *argument)
+{
+    osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityLow, 0, 256, flashSaveThreadStack, &flashSaveThreadTCB);
+    flashSaveThreadHandle = osThreadCreate(osThread(flashSaveThread), argument);
 }

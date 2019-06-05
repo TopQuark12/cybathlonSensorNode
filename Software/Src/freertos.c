@@ -66,7 +66,6 @@
 #include "ICM20602.h"
 #include "flash.h"
 #include "MA730.h"
-//#include "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,19 +92,23 @@ uint16_t magRxData;
 //static uint16_t magTxData;
 
 /* USER CODE END Variables */
-// osThreadId canTxThreadHandle;
-// uint32_t canTxThreadBuffer[256];
-// osStaticThreadDef_t canTxThreadControlBlock;
+osThreadId fatfsThreadHandle;
+uint32_t fatfsThreadStack[ 256 ];
+osStaticThreadDef_t fatfsThreadTCB;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
 /* USER CODE END FunctionPrototypes */
 
-void startCanTx(void const * argument);
+void fatfsThreadFunc(void const * argument);
 
 extern void MX_FATFS_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Pre/Post sleep processing prototypes */
+void PreSleepProcessing(uint32_t *ulExpectedIdleTime);
+void PostSleepProcessing(uint32_t *ulExpectedIdleTime);
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
@@ -116,7 +119,11 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, Stack
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
+void vApplicationIdleHook(void);
+void vApplicationTickHook(void);
+void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
 void vApplicationMallocFailedHook(void);
+void vApplicationDaemonTaskStartupHook(void);
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
@@ -130,6 +137,41 @@ __weak unsigned long getRunTimeCounterValue(void)
 return 0;
 }
 /* USER CODE END 1 */
+
+/* USER CODE BEGIN 2 */
+__weak void vApplicationIdleHook( void )
+{
+   /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
+   to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
+   task. It is essential that code added to this hook function never attempts
+   to block in any way (for example, call xQueueReceive() with a block time
+   specified, or call vTaskDelay()). If the application makes use of the
+   vTaskDelete() API function (as this demo application does) then it is also
+   important that vApplicationIdleHook() is permitted to return to its calling
+   function, because it is the responsibility of the idle task to clean up
+   memory allocated by the kernel to any task that has since been deleted. */
+}
+/* USER CODE END 2 */
+
+/* USER CODE BEGIN 3 */
+__weak void vApplicationTickHook( void )
+{
+   /* This function will be called by each tick interrupt if
+   configUSE_TICK_HOOK is set to 1 in FreeRTOSConfig.h. User code can be
+   added here, but the tick hook is called from an interrupt context, so
+   code must not attempt to block, and only the interrupt safe FreeRTOS API
+   functions can be used (those that end in FromISR()). */
+}
+/* USER CODE END 3 */
+
+/* USER CODE BEGIN 4 */
+__weak void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
+{
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+}
+/* USER CODE END 4 */
 
 /* USER CODE BEGIN 5 */
 __weak void vApplicationMallocFailedHook(void)
@@ -146,6 +188,24 @@ __weak void vApplicationMallocFailedHook(void)
    provide information on how the remaining heap might be fragmented). */
 }
 /* USER CODE END 5 */
+
+/* USER CODE BEGIN DAEMON_TASK_STARTUP_HOOK */
+void vApplicationDaemonTaskStartupHook(void)
+{
+}
+/* USER CODE END DAEMON_TASK_STARTUP_HOOK */
+
+/* USER CODE BEGIN PREPOSTSLEEP */
+__weak void PreSleepProcessing(uint32_t *ulExpectedIdleTime)
+{
+/* place for user code */ 
+}
+
+__weak void PostSleepProcessing(uint32_t *ulExpectedIdleTime)
+{
+/* place for user code */
+}
+/* USER CODE END PREPOSTSLEEP */
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -195,62 +255,46 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-
-  // osThreadStaticDef(canTxThread, startCanTx, osPriorityNormal, 0, 256, canTxThreadBuffer, &canTxThreadControlBlock);
-  // canTxThreadHandle = osThreadCreate(osThread(canTxThread), NULL);
-  startCanTx(NULL);
-
-  osThreadStaticDef(flashSaveThread, flashSaveThreadFunction, osPriorityAboveNormal,
-                    0, 256, flashSaveThreadBuffer, &flashSaveThreadControlBlock);
-  flashSaveThreadHandle = osThreadCreate(osThread(flashSaveThread), NULL);
-  /* USER CODE END RTOS_THREADS */
-
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of fatfsThread */
+  osThreadStaticDef(fatfsThread, fatfsThreadFunc, osPriorityNormal, 0, 256, fatfsThreadStack, &fatfsThreadTCB);
+  fatfsThreadHandle = osThreadCreate(osThread(fatfsThread), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+
+  startIMUSampling(NULL);
+  startCanTx(NULL);
+  startFlashSave(NULL);
+
+  /* USER CODE END RTOS_THREADS */
+
 }
 
-/* USER CODE BEGIN Header_startCanTx */
+/* USER CODE BEGIN Header_fatfsThreadFunc */
 /**
-  * @brief  Function implementing the canTxThread thread.
+  * @brief  Function implementing the fatfsThread thread.
   * @param  argument: Not used 
   * @retval None
   */
-/* USER CODE END Header_startCanTx */
-// void startCanTx(void const * argument)
-// {
-//   /* init code for FATFS */
+/* USER CODE END Header_fatfsThreadFunc */
+__weak void fatfsThreadFunc(void const * argument)
+{
+  /* init code for FATFS */
+  MX_FATFS_Init();
 
-//   /* USER CODE BEGIN startCanTx */
-
-//   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
-//   HAL_CAN_Start(&hcan1);
-//   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-
-//   icm20602Init();
-
-//   osDelay(500);
-
-//   /* Infinite loop */
-//   for (;;)
-//   {
-
-//     icm20602Update();
-
-//     HAL_GPIO_WritePin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin, 1 - HAL_GPIO_ReadPin(LED_G_CAN_GPIO_Port, LED_G_CAN_Pin));
-
-//     magRxData = ma730ReadAngle();
-
-//     canTxFloatMessageWithID(canDefaultID | CAN_IMU_X_MASK, gIMUdata.accData[0], gIMUdata.gyroData[0]);
-//     canTxFloatMessageWithID(canDefaultID | CAN_IMU_Y_MASK, gIMUdata.accData[1], gIMUdata.gyroData[1]);
-//     canTxFloatMessageWithID(canDefaultID | CAN_IMU_Z_MASK, gIMUdata.accData[2], gIMUdata.gyroData[2]);
-//     osDelay(1);
-
-//   }
-//   /* USER CODE END startCanTx */
-// }
+  /* USER CODE BEGIN fatfsThreadFunc */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END fatfsThreadFunc */
+}
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */

@@ -17,6 +17,10 @@
 #include "ICM20602.h"
 #include <string.h>
 
+TaskHandle_t IMUSamplingThreadHandle;
+uint32_t IMUSamplingThreadStack[256];
+StaticTask_t IMUSamplingThreadTCB;
+
 imu_t gIMUdata;
 imuRaw_t gIMUOffset, imuRawData;
 
@@ -128,4 +132,22 @@ void icm20602Update(void)
     gIMUdata.gyroData[yAxis] = imuRawData.gyroData[yAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
     imuRawData.gyroData[zAxis] = (rxBuffer[13]) << 8 | rxBuffer[14];
     gIMUdata.gyroData[zAxis] = imuRawData.gyroData[zAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
+}
+
+void IMUSamplingThreadFunc(void const* argument)
+{
+    icm20602Init();
+    osDelay(500);
+
+    for (;;)
+    {
+        icm20602Update();
+        osDelay(10);
+    }
+}
+
+void startIMUSampling(void *argument)
+{
+    osThreadStaticDef(IMUSamplingThread, IMUSamplingThreadFunc, osPriorityAboveNormal, 0, 256, IMUSamplingThreadStack, &IMUSamplingThreadTCB);
+    IMUSamplingThreadHandle = osThreadCreate(osThread(IMUSamplingThread), argument);
 }

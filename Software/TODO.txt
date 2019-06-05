@@ -1,0 +1,10 @@
+The to do list listing things to do
+
+- move code out of freertos.c                   DONE
+- create sensor sampling thread                 DONE
+- Implement circulat buffer
+- refactor CAN TX thread
+- Implement CAN RX handler
+- (optional) Time sync between boards
+- Implement FATFS, write data into CSV
+- Button drivers

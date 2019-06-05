@@ -4,60 +4,28 @@
   * Description        : This file provides code for the configuration
   *                      of the CAN instances.
   ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
+  * @attention
   *
-  * Copyright (c) 2019 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "FreeRTOS.h"
 #include "can.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_can.h"
-#include "cmsis_os.h"
-#include "string.h"
 
 /* USER CODE BEGIN 0 */
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
 #include "task.h"
 #include "ICM20602.h"
+#include "string.h"
 
 TaskHandle_t canTxThreadHandle;
 uint32_t canTxThreadStack[256];
@@ -87,6 +55,7 @@ uint32_t *canTxMailboxUsed;
 uint32_t canDefaultID = 0x200;
 /* USER CODE END 0 */
 
+CAN_HandleTypeDef hcan1;
 
 /* CAN1 init function */
 void MX_CAN1_Init(void)
@@ -108,6 +77,7 @@ void MX_CAN1_Init(void)
   {
     Error_Handler();
   }
+
 }
 
 void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
@@ -158,7 +128,7 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
   /* USER CODE END CAN1_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_CAN1_CLK_DISABLE(); 
+    __HAL_RCC_CAN1_CLK_DISABLE();
   
     /**CAN1 GPIO Configuration    
     PA11     ------> CAN1_RX
@@ -185,23 +155,18 @@ void canTxThreadFunc(void const *argument)
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
-  icm20602Init();
-
-  osDelay(500);
-
   /* Infinite loop */
   for (;;)
   {
-
-    icm20602Update();
-
     osDelay(1);
   }
 }
 
-void startCanTx(void const *argument)
+void startCanTx(void *argument)
 {
-  canTxThreadHandle = xTaskCreateStatic((TaskFunction_t)canTxThreadFunc, "canTxThread", 256, NULL, 3, canTxThreadStack, &canTxThreadTCB);
+  //canTxThreadHandle = xTaskCreateStatic((TaskFunction_t)canTxThreadFunc, "canTxThread", 256, NULL, 3, canTxThreadStack, &canTxThreadTCB);
+  osThreadStaticDef(canTxThread, canTxThreadFunc, osPriorityNormal, 0, 256, canTxThreadStack, &canTxThreadTCB);
+  canTxThreadHandle = osThreadCreate(osThread(canTxThread), argument);
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)

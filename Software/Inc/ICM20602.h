@@ -118,7 +118,9 @@ typedef struct imuRaw_t
 extern imu_t gIMUdata;
 extern imuRaw_t gIMUOffset;
 
-uint8_t icm20602Init(void);
-void icm20602Update(void);
+// uint8_t icm20602Init(void);
+// void icm20602Update(void);
+
+void startIMUSampling(void *argument);
 
 #endif //ICM20602_h

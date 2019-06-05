@@ -59,6 +59,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -108,6 +109,8 @@ void Error_Handler(void);
 #define BUTTON_CAN_GPIO_Port GPIOB
 #define BUTTON_SEN_Pin GPIO_PIN_7
 #define BUTTON_SEN_GPIO_Port GPIOB
+#define SDIO_SW_Pin GPIO_PIN_8
+#define SDIO_SW_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define CAN_IMU_X_MASK 0x010
 #define CAN_IMU_Y_MASK 0x020

@@ -30,5 +30,6 @@ typedef struct flashParamEntry_t
 extern flashSaveStatus_e gFlashSaveFlag;
 void flashLoad(const flashParamEntry_t *paramList);
 void flashSaveThreadFunction(const void *argument);
+void startFlashSave(void *argument);
 
 #endif //FLASH_H
