@@ -1,11 +1,12 @@
 /**
- ***************************************(C) COPYRIGHT 2018 DJI***************************************
- * @file       sd_card.c
- * @brief      this file contains sd card basic operating function
- * @note         
- * @Version    V1.0.0
- * @Date       Jan-30-2018      
- ***************************************(C) COPYRIGHT 2018 DJI***************************************
+ * @file    sd_card.c
+ * @author	Alex Wong Tat Hang (thwongaz@connect.ust.hk)
+ * @brief   Driver for the cybathlon sensor node SD card
+ * @version 0.1
+ * @date	2019-6-8
+ *
+ * @copyright Copyright (c) 2019
+ *
  */
  
 #include "bsp_driver_sd.h"
@@ -14,9 +15,10 @@
 #include "sdio.h"
 #include "sd_card.h"
 #include "main.h"
+#include "ICM20602.h"
+#include "stdlib.h"
 
 FATFS          SDFatFs;                               /* file system object for SD card logical drive */
-static uint8_t buffer[_MAX_SS];                       /* a work buffer for the f_mkfs() */
 uint32_t       byteswritten, bytesread;               /* file write/read counts */
 uint8_t        rtext[100];                            /* file read buffer */
 uint8_t        err;
@@ -30,8 +32,8 @@ uint8_t        wtext[] = " Welcome to HKUST! "; 	/* file write buffer */
   */
 void sd_test(void)
 {   
-	/* Register the file system object to the FatFs module and create a FAT file system (format) on the logical drive */
-	if ((f_mount(&SDFatFs, (TCHAR const *)SDPath, 0) == FR_OK) && (f_mkfs((TCHAR const *)SDPath, FM_ANY, 0, buffer, sizeof(buffer)) == FR_OK))
+	/* Register the file system object to the FatFs module */
+	if ((f_mount(&SDFatFs, (TCHAR const *)SDPath, 0) == FR_OK))
 	{
 
 			/* Create and Open a new text file object with write access */
@@ -68,6 +70,30 @@ void sd_test(void)
 	/* Unlink the SD disk I/O driver */
 	FATFS_UnLinkDriver(SDPath);  
 }
+
+void fatfsWriteIMUFrame(imuDataFrame_t inFrame)
+{
+	static uint8_t line[100];
+
+
+
+}
+
+void fatfsThreadFunc(void const * argument)
+{
+  /* init code for FATFS */
+  MX_FATFS_Init();
+
+  /* USER CODE BEGIN fatfsThreadFunc */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END fatfsThreadFunc */
+}
+
+
 
 
 

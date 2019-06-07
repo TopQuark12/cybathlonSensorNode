@@ -108,6 +108,16 @@ uint8_t icm20602Init(void)
     return 1;
 }
 
+float rawConvertionAccel(int16_t *rawData)
+{
+	return *rawData / 32768.0 * (2 << ICM20602_ACCEL_MEASUREMENT_RANGE);
+}
+
+float rawConvertionGyro(int16_t *rawData)
+{
+	return *rawData / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
+}
+
 /**
  * @brief	get gyro, accel and temp data from IMU
  */
@@ -156,6 +166,8 @@ uint8_t IMUSendCANFrame(imuDataFrame_t *dataFrame)
 
     return HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, (uint8_t *)&canTxBuffer, &canTxMailboxUsed);
 }
+
+
 
 void IMUSamplingThreadFunc(void const *argument)
 {

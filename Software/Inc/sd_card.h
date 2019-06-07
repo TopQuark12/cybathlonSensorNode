@@ -1,12 +1,13 @@
 /**
- ***************************************(C) COPYRIGHT 2018 DJI***************************************
- * @file       sd_card.h
- * @brief      this file contains the common defines and functions prototypes for 
- *             the sd_card.c driver
- * @note         
- * @Version    V1.0.0
- * @Date       Jan-30-2018      
- ***************************************(C) COPYRIGHT 2018 DJI***************************************
+/**
+ * @file    sd_card.h
+ * @author	Alex Wong Tat Hang (thwongaz@connect.ust.hk)
+ * @brief   Driver for the cybathlon sensor node SD card
+ * @version 0.1
+ * @date	2019-6-8
+ *
+ * @copyright Copyright (c) 2019
+ *
  */
  
 #ifndef __SD_CARD_H__
@@ -20,6 +21,7 @@
 extern uint8_t err;
 
 void sd_test(void);
+void fatfsThreadFunc(void const * argument);
 
 #endif
 

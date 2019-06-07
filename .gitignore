@@ -68,3 +68,7 @@ dkms.conf
 STM32/GPATH
 STM32/GRTAGS
 STM32/GTAGS
+
+#Eclipse project settings
+*.cproject
+*.project
