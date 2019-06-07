@@ -66,6 +66,7 @@
 #include "ICM20602.h"
 #include "flash.h"
 #include "MA730.h"
+#include "queue.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,6 +96,9 @@ uint16_t magRxData;
 osThreadId fatfsThreadHandle;
 uint32_t fatfsThreadStack[ 256 ];
 osStaticThreadDef_t fatfsThreadTCB;
+osMessageQId imuDataQueueHandle;
+uint8_t imuDataQueueBuffer[ 1024 * sizeof( imuDataFrame_t ) ];
+osStaticMessageQDef_t imuDataQueueControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -254,6 +258,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* definition and creation of imuDataQueue */
+  osMessageQStaticDef(imuDataQueue, 1024, imuDataFrame_t, imuDataQueueBuffer, &imuDataQueueControlBlock);
+  imuDataQueueHandle = osMessageCreate(osMessageQ(imuDataQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */

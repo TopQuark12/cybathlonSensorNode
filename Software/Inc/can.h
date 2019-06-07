@@ -34,6 +34,10 @@ extern CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN Private defines */
 
+#define CAN_IMU_X_MASK 0x010
+#define CAN_IMU_Y_MASK 0x020
+#define CAN_IMU_Z_MASK 0x030
+
 extern CAN_FilterTypeDef canAllPassFilter;
 
 extern CAN_RxHeaderTypeDef canRxFrame;

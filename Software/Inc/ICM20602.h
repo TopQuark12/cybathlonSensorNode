@@ -1,6 +1,8 @@
 #ifndef ICM20602_H
 #define ICM20602_H
 
+#include "cmsis_os.h"
+
 #define ICM20602_SPI_DRIVER	                &hspi1
 #define ICM20602_TIMEOUT_TICKS	            100
 #define ICM20602_UPDATE_BUFFER_SIZE	        15
@@ -107,7 +109,6 @@ typedef struct imu_t
     float tempData;    //unit: deg C
 } imu_t;
 
-
 typedef struct imuRaw_t
 {
     int16_t accData[3];
@@ -115,12 +116,33 @@ typedef struct imuRaw_t
     int16_t tempData;
 } imuRaw_t;
 
+typedef enum
+{
+    ACCEL = 0,
+    GYRO
+} sensorType_e;
+
+typedef struct __attribute__((packed)) imuDataFrame_t
+{
+    uint32_t timeStamp;
+    uint8_t node;
+    axisType_e dataType;
+    uint16_t dataRaw[2];
+} imuDataFrame_t;
+
+typedef union canDataFrame_t
+{
+    uint32_t uint32[2];
+    uint16_t uint16[4];
+    uint8_t uint8[8];
+} canDataFrame_t;
+
 extern imu_t gIMUdata;
 extern imuRaw_t gIMUOffset;
 
 // uint8_t icm20602Init(void);
 // void icm20602Update(void);
-
+extern osMessageQId imuDataQueueHandle;
 void startIMUSampling(void *argument);
 
 #endif //ICM20602_h

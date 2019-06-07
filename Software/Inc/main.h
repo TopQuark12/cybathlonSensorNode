@@ -73,7 +73,8 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+extern uint8_t isMaster;
+extern uint8_t sensorNodeID;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -112,9 +113,7 @@ void Error_Handler(void);
 #define SDIO_SW_Pin GPIO_PIN_8
 #define SDIO_SW_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define CAN_IMU_X_MASK 0x010
-#define CAN_IMU_Y_MASK 0x020
-#define CAN_IMU_Z_MASK 0x030
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

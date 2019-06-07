@@ -165,8 +165,11 @@ void canTxThreadFunc(void const *argument)
 void startCanTx(void *argument)
 {
   //canTxThreadHandle = xTaskCreateStatic((TaskFunction_t)canTxThreadFunc, "canTxThread", 256, NULL, 3, canTxThreadStack, &canTxThreadTCB);
-  osThreadStaticDef(canTxThread, canTxThreadFunc, osPriorityNormal, 0, 256, canTxThreadStack, &canTxThreadTCB);
-  canTxThreadHandle = osThreadCreate(osThread(canTxThread), argument);
+  // osThreadStaticDef(canTxThread, canTxThreadFunc, osPriorityNormal, 0, 256, canTxThreadStack, &canTxThreadTCB);
+  // canTxThreadHandle = osThreadCreate(osThread(canTxThread), argument);
+  HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
@@ -174,51 +177,51 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   while (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))
   {
     HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &canRxFrame, canRxBuffer);
-    canRxHandler();
+    //canRxHandler();
   }
 }
 
-void canIDInit(void)
-{
-  canTxFrame.StdId = canDefaultID;
-  canTxFrame.IDE = CAN_ID_STD;
-  canTxFrame.RTR = CAN_RTR_DATA;
-  canTxFrame.DLC = 8;
-  canTxFrame.TransmitGlobalTime = DISABLE;
-}
+// void canIDInit(void)
+// {
+//   canTxFrame.StdId = canDefaultID;
+//   canTxFrame.IDE = CAN_ID_STD;
+//   canTxFrame.RTR = CAN_RTR_DATA;
+//   canTxFrame.DLC = 8;
+//   canTxFrame.TransmitGlobalTime = DISABLE;
+// }
 
-void canRxHandler(void)
-{
-  return;
-}
+// void canRxHandler(void)
+// {
+//   return;
+// }
 
-void canTxMessageWithID(uint32_t canID, uint8_t data[])
-{
-  canTxFrame.StdId = canID;
-  memcpy(canTxBuffer, data, 8);
-  if (HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed) != HAL_OK)
-  {
-    /* Transmission request Error */
-    Error_Handler();
-  }
-}
+// void canTxMessageWithID(uint32_t canID, uint8_t data[])
+// {
+//   canTxFrame.StdId = canID;
+//   memcpy(canTxBuffer, data, 8);
+//   if (HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed) != HAL_OK)
+//   {
+//     /* Transmission request Error */
+//     Error_Handler();
+//   }
+// }
 
-void canTxMessage(uint8_t data[])
-{
-  canTxMessageWithID(canDefaultID, data);
-}
+// void canTxMessage(uint8_t data[])
+// {
+//   canTxMessageWithID(canDefaultID, data);
+// }
 
-void canTxFloatMessageWithID(uint32_t canID, float f1, float f2)
-{
-  memcpy(canTxBuffer, &f1, 4);
-  memcpy(canTxBuffer + 4, &f2, 4);
-  canTxMessageWithID(canID, canTxBuffer);
-}
+// void canTxFloatMessageWithID(uint32_t canID, float f1, float f2)
+// {
+//   memcpy(canTxBuffer, &f1, 4);
+//   memcpy(canTxBuffer + 4, &f2, 4);
+//   canTxMessageWithID(canID, canTxBuffer);
+// }
 
-void canTxFloatMessage(float f1, float f2)
-{
-  canTxFloatMessageWithID(canDefaultID, f1, f2);
-}
+// void canTxFloatMessage(float f1, float f2)
+// {
+//   canTxFloatMessageWithID(canDefaultID, f1, f2);
+// }
 
 /* USER CODE END 1 */
 

@@ -16,10 +16,12 @@
 #include "stm32f4xx_hal.h"
 #include "ICM20602.h"
 #include <string.h>
+#include "can.h"
 
 TaskHandle_t IMUSamplingThreadHandle;
 uint32_t IMUSamplingThreadStack[256];
 StaticTask_t IMUSamplingThreadTCB;
+extern osMessageQId imuDataQueueHandle;
 
 imu_t gIMUdata;
 imuRaw_t gIMUOffset, imuRawData;
@@ -134,14 +136,70 @@ void icm20602Update(void)
     gIMUdata.gyroData[zAxis] = imuRawData.gyroData[zAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
 }
 
-void IMUSamplingThreadFunc(void const* argument)
+uint8_t IMUSendCANFrame(imuDataFrame_t *dataFrame)
+{
+    static CAN_TxHeaderTypeDef canTxFrame;
+    canDataFrame_t canTxBuffer;
+    uint32_t canTxMailboxUsed;
+
+    canTxFrame.StdId = 0x100 &
+                       ((dataFrame->dataType & 0xF0) << 4) &
+                       (dataFrame->node & 0xF0);
+    canTxFrame.IDE = CAN_ID_STD;
+    canTxFrame.DLC = 8;
+    canTxFrame.RTR = CAN_RTR_DATA;
+    canTxFrame.TransmitGlobalTime = DISABLE;
+
+    canTxBuffer.uint32[1] = dataFrame->timeStamp;
+    canTxBuffer.uint16[1] = dataFrame->dataRaw[GYRO];
+    canTxBuffer.uint16[0] = dataFrame->dataRaw[ACCEL];
+
+    return HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, (uint8_t *)&canTxBuffer, &canTxMailboxUsed);
+}
+
+void IMUSamplingThreadFunc(void const *argument)
 {
     icm20602Init();
     osDelay(500);
 
+    imuDataFrame_t imuDataFrame[3];
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        imuDataFrame[i].node = sensorNodeID;
+    }
+
     for (;;)
     {
         icm20602Update();
+        uint32_t timeStamp = HAL_GetTick();
+
+        for (uint8_t i = 0; i < 3; i++)
+        {
+            imuDataFrame[i].timeStamp = timeStamp;
+        }
+
+        imuDataFrame[xAxis].dataRaw[ACCEL] = imuRawData.accData[xAxis];
+        imuDataFrame[xAxis].dataRaw[GYRO] = imuRawData.gyroData[xAxis];
+
+        imuDataFrame[yAxis].dataRaw[ACCEL] = imuRawData.accData[yAxis];
+        imuDataFrame[yAxis].dataRaw[GYRO] = imuRawData.gyroData[yAxis];
+
+        imuDataFrame[zAxis].dataRaw[ACCEL] = imuRawData.accData[zAxis];
+        imuDataFrame[zAxis].dataRaw[GYRO] = imuRawData.gyroData[zAxis];
+
+        if(isMaster)
+        {
+            xQueueSend(imuDataQueueHandle, &imuDataFrame[xAxis], 0);
+            xQueueSend(imuDataQueueHandle, &imuDataFrame[yAxis], 0);
+            xQueueSend(imuDataQueueHandle, &imuDataFrame[zAxis], 0);
+        } else {
+            uint8_t canTxFail = 0;
+            canTxFail &= IMUSendCANFrame(&imuDataFrame[xAxis]);
+            canTxFail &= IMUSendCANFrame(&imuDataFrame[yAxis]);
+            canTxFail &= IMUSendCANFrame(&imuDataFrame[zAxis]);
+            HAL_GPIO_WritePin(LED_R_ERROR_GPIO_Port, LED_R_ERROR_Pin, canTxFail);
+        }
+
         osDelay(10);
     }
 }

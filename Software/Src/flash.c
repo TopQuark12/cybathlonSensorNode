@@ -81,6 +81,8 @@ const flashParamEntry_t savedParameters[] = {
     {&gIMUOffset.accData[xAxis], FLASH_TYPEPROGRAM_HALFWORD},
     {&gIMUOffset.accData[yAxis], FLASH_TYPEPROGRAM_HALFWORD},
     {&gIMUOffset.accData[zAxis], FLASH_TYPEPROGRAM_HALFWORD},
+    {&isMaster, FLASH_TYPEPROGRAM_BYTE},
+    {&sensorNodeID, FLASH_TYPEPROGRAM_BYTE},
     {NULL, 0}
 };
 

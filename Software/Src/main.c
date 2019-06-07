@@ -89,7 +89,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t isMaster = 0;
+uint8_t sensorNodeID = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,7 +145,7 @@ int main(void)
   gFlashSaveFlag = FLASH_SAVE_READY;    //Setup flash parameter saving and loading
   flashLoad(NULL);                      //Load default set of parameters
 
-  canIDInit();    // Initialize can ID
+  //canIDInit();    // Initialize can ID
 
   /* USER CODE END 2 */
 
