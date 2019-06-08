@@ -17,12 +17,14 @@
 #include "main.h"
 #include "ICM20602.h"
 #include "stdlib.h"
+#include "stdio.h"
+#include "math.h"
 
 FATFS          SDFatFs;                               /* file system object for SD card logical drive */
 uint32_t       byteswritten, bytesread;               /* file write/read counts */
 uint8_t        rtext[100];                            /* file read buffer */
 uint8_t        err;
-static char    *f_name = "cybathlon.txt";           /* file name */
+static char    *f_name = "data.csv";           /* file name */
 uint8_t        wtext[] = " Welcome to HKUST! "; 	/* file write buffer */
 
 /**
@@ -71,26 +73,81 @@ void sd_test(void)
 	FATFS_UnLinkDriver(SDPath);  
 }
 
-void fatfsWriteIMUFrame(imuDataFrame_t inFrame)
+void fatfsStartLogging(void)
 {
-	static uint8_t line[100];
+	/* Register the file system object to the FatFs module */
+	if ((f_mount(&SDFatFs, (TCHAR const *)SDPath, 0) == FR_OK))
+	{
+		/* Create and Open a new text file object with write access */
+		if (f_open(&SDFile, f_name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+		{
+			err = ERR_OPEN;
+		}
+	}
+	else
+	{
+		err = ERR_MOUNT_MKFS;
+	}
+}
 
+void fatfsEndLogging(void)
+{
+	/* Close the open text file */
+	f_close(&SDFile);
 
+	/* Unlink the SD disk I/O driver */
+	FATFS_UnLinkDriver(SDPath);
+}
 
+void fatfsWriteln(char data[], uint8_t len)
+{
+	f_write(&SDFile, data, len, (void *)&byteswritten);
+}
+
+uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame)
+{
+	char line[100];
+	float data[2];
+	char dataStr[2][30];
+	char axis;
+	const char axisName[] = {'x', 'y', 'z'};
+
+	data[ACCEL] = rawConvertionAccel((int16_t *)&inFrame.dataRaw[ACCEL]);
+	char *tmpSign = (data[ACCEL] < 0) ? "-" : "";
+	float tmpVal = (data[ACCEL] < 0) ? -data[ACCEL] : data[ACCEL];
+	int tmpInt1 = tmpVal;
+	float tmpFrac = tmpVal - tmpInt1;
+	int tmpInt2 = trunc(tmpFrac * 10000);
+	sprintf(dataStr[ACCEL], "%s%d.%04d", tmpSign, tmpInt1, tmpInt2);
+
+	data[GYRO] = rawConvertionGyro((int16_t *)&inFrame.dataRaw[GYRO]);
+	tmpSign = (data[GYRO] < 0) ? "-" : "";
+	tmpVal = (data[GYRO] < 0) ? -data[GYRO] : data[GYRO];
+	tmpInt1 = tmpVal;
+	tmpFrac = tmpVal - tmpInt1;
+	tmpInt2 = trunc(tmpFrac * 10000);
+	sprintf(dataStr[GYRO], "%s%d.%04d", tmpSign, tmpInt1, tmpInt2);
+
+	axis = axisName[inFrame.dataType];
+	uint8_t len = snprintf(line, 100, "%lu,%c,%u,%sg,%sdps\n", inFrame.timeStamp, axis, inFrame.node, dataStr[ACCEL], dataStr[GYRO]);
+	if (len >= 100) {
+		return 1;		//write fail, over-sized line
+	}
+
+	return 0;
 }
 
 void fatfsThreadFunc(void const * argument)
 {
-  /* init code for FATFS */
-  MX_FATFS_Init();
+	MX_FATFS_Init();
+	fatfsStartLogging();
+	fatfsEndLogging();
 
-  /* USER CODE BEGIN fatfsThreadFunc */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END fatfsThreadFunc */
+	for(;;)
+	{
+		
+		osDelay(1);
+	}
 }
 
 

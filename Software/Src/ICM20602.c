@@ -17,6 +17,7 @@
 #include "ICM20602.h"
 #include <string.h>
 #include "can.h"
+#include "sd_card.h"
 
 TaskHandle_t IMUSamplingThreadHandle;
 uint32_t IMUSamplingThreadStack[256];
@@ -131,19 +132,19 @@ void icm20602Update(void)
     }
     icm20602TransmitReceive(txBuffer, rxBuffer, ICM20602_UPDATE_BUFFER_SIZE);
     imuRawData.accData[xAxis] = (rxBuffer[1]) << 8 | rxBuffer[2];
-    gIMUdata.accData[xAxis] = imuRawData.accData[xAxis] / 32768.0 * (2 << ICM20602_ACCEL_MEASUREMENT_RANGE);
+    gIMUdata.accData[xAxis] = rawConvertionAccel(&imuRawData.accData[xAxis]);
     imuRawData.accData[yAxis] = (rxBuffer[3]) << 8 | rxBuffer[4];
-    gIMUdata.accData[yAxis] = imuRawData.accData[yAxis] / 32768.0 * (2 << ICM20602_ACCEL_MEASUREMENT_RANGE);
+    gIMUdata.accData[yAxis] = rawConvertionAccel(&imuRawData.accData[yAxis]);
     imuRawData.accData[zAxis] = (rxBuffer[5]) << 8 | rxBuffer[6];
-    gIMUdata.accData[zAxis] = imuRawData.accData[zAxis] / 32768.0 * (2 << ICM20602_ACCEL_MEASUREMENT_RANGE);
+    gIMUdata.accData[zAxis] = rawConvertionAccel(&imuRawData.accData[zAxis]);
     imuRawData.tempData = (rxBuffer[7]) << 8 | rxBuffer[8];
     gIMUdata.tempData = imuRawData.tempData * ICM20602_TEMP_SENSITIVITY + ICM20602_TEMP_OFFSET;
     imuRawData.gyroData[xAxis] = (rxBuffer[9]) << 8 | rxBuffer[10];
-    gIMUdata.gyroData[xAxis] = imuRawData.gyroData[xAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
+    gIMUdata.gyroData[xAxis] = rawConvertionGyro(&imuRawData.gyroData[xAxis]);
     imuRawData.gyroData[yAxis] = (rxBuffer[11]) << 8 | rxBuffer[12];
-    gIMUdata.gyroData[yAxis] = imuRawData.gyroData[yAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
+    gIMUdata.gyroData[yAxis] = rawConvertionGyro(&imuRawData.gyroData[yAxis]);
     imuRawData.gyroData[zAxis] = (rxBuffer[13]) << 8 | rxBuffer[14];
-    gIMUdata.gyroData[zAxis] = imuRawData.gyroData[zAxis] / 32768.0 * (250 << ICM20602_GYRO_MEASUREMENT_RANGE);
+    gIMUdata.gyroData[zAxis] = rawConvertionGyro(&imuRawData.gyroData[zAxis]);
 }
 
 uint8_t IMUSendCANFrame(imuDataFrame_t *dataFrame)
@@ -179,6 +180,9 @@ void IMUSamplingThreadFunc(void const *argument)
     {
         imuDataFrame[i].node = sensorNodeID;
     }
+    imuDataFrame[xAxis].dataType = xAxis;
+    imuDataFrame[yAxis].dataType = yAxis;
+    imuDataFrame[zAxis].dataType = zAxis;
 
     for (;;)
     {
@@ -198,8 +202,9 @@ void IMUSamplingThreadFunc(void const *argument)
 
         imuDataFrame[zAxis].dataRaw[ACCEL] = imuRawData.accData[zAxis];
         imuDataFrame[zAxis].dataRaw[GYRO] = imuRawData.gyroData[zAxis];
+        fatfsWriteIMUFrame(imuDataFrame[zAxis]);
 
-        if(isMaster)
+        if(isMaster != 0)
         {
             xQueueSend(imuDataQueueHandle, &imuDataFrame[xAxis], 0);
             xQueueSend(imuDataQueueHandle, &imuDataFrame[yAxis], 0);

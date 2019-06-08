@@ -144,5 +144,7 @@ extern imuRaw_t gIMUOffset;
 // void icm20602Update(void);
 extern osMessageQId imuDataQueueHandle;
 void startIMUSampling(void *argument);
+float rawConvertionAccel(int16_t *rawData);
+float rawConvertionGyro(int16_t *rawData);
 
 #endif //ICM20602_h
