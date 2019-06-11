@@ -22,7 +22,7 @@
 TaskHandle_t IMUSamplingThreadHandle;
 uint32_t IMUSamplingThreadStack[256];
 StaticTask_t IMUSamplingThreadTCB;
-extern osMessageQId imuDataQueueHandle;
+extern QueueHandle_t imuDataQueueHandle;
 
 imu_t gIMUdata;
 imuRaw_t gIMUOffset, imuRawData;
@@ -202,7 +202,6 @@ void IMUSamplingThreadFunc(void const *argument)
 
         imuDataFrame[zAxis].dataRaw[ACCEL] = imuRawData.accData[zAxis];
         imuDataFrame[zAxis].dataRaw[GYRO] = imuRawData.gyroData[zAxis];
-        fatfsWriteIMUFrame(imuDataFrame[zAxis]);
 
         if(isMaster != 0)
         {

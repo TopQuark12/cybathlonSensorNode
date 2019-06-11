@@ -30,10 +30,10 @@ typedef struct buttonThreadParam_t
 	button_t *buttonArray;
 } buttonThreadParam_t;
 
-uint8_t is_button_up(button_t *button);
-uint8_t is_button_down(button_t *button);
-uint8_t is_button_press(button_t *button);
-uint8_t is_button_release(button_t *button);
+uint8_t isButtonPressed(button_t *button);
+uint8_t isButtonReleased(button_t *button);
+uint8_t isButtonDown(button_t *button);
+uint8_t isButtonUp(button_t *button);
 
 enum buttonAlias_e
 {

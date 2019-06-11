@@ -92,14 +92,14 @@
 // static uint8_t spiImuRxData[16];
 uint16_t magRxData;
 //static uint16_t magTxData;
+uint8_t imuDataQueueBuffer[ 1024 * sizeof( imuDataFrame_t ) ];
+static StaticQueue_t imuDataQueueControlBlock;
+QueueHandle_t imuDataQueueHandle;
 
 /* USER CODE END Variables */
 osThreadId fatfsThreadHandle;
 uint32_t fatfsThreadStack[ 256 ];
 osStaticThreadDef_t fatfsThreadTCB;
-osMessageQId imuDataQueueHandle;
-uint8_t imuDataQueueBuffer[ 1024 * sizeof( imuDataFrame_t ) ];
-osStaticMessageQDef_t imuDataQueueControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -260,13 +260,9 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the queue(s) */
-  /* definition and creation of imuDataQueue */
-  osMessageQStaticDef(imuDataQueue, 1024, imuDataFrame_t, imuDataQueueBuffer, &imuDataQueueControlBlock);
-  imuDataQueueHandle = osMessageCreate(osMessageQ(imuDataQueue), NULL);
-
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  imuDataQueueHandle = xQueueCreateStatic(1024, sizeof(imuDataFrame_t), imuDataQueueBuffer, &imuDataQueueControlBlock);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */

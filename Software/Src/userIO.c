@@ -19,9 +19,6 @@
 TaskHandle_t buttonUpdateThreadHandle;
 uint32_t buttonUpdateThreadStack[256];
 StaticTask_t buttonUpdateThreadTCB;
-osStaticMutexDef_t buttonCANCB;
-osStaticMutexDef_t buttonSenCB;
-buttonThreadParam_t buttonParam;
 
 //Button definitions
 button_t buttons[2];
@@ -35,42 +32,44 @@ void updateButton(button_t *button)
 {
 	osMutexWait(button->mutexID, BUTTON_MUTEX_TIMEOUT);
 	button->history = button->history << 1;
-	button->history |= HAL_GPIO_ReadPin(button->GPIOx, button->GPIO_Pin);
+	button->history |= !HAL_GPIO_ReadPin(button->GPIOx, button->GPIO_Pin);
 	osMutexRelease(button->mutexID);
 }
 
-uint8_t is_button_pressed(button_t *button){
+uint8_t isButtonPressed(button_t *button){
 	osMutexWait(button->mutexID, BUTTON_MUTEX_TIMEOUT);
     uint8_t pressed = 0;
     if ((button->history & BUTTON_COMP_MASK) == BUTTON_COMP_PRES){
         pressed = 1;
         button->history = 0xFFFFFFFF;
     }
-    return pressed;
     osMutexRelease(button->mutexID);
+    return pressed;
 }
 
-uint8_t is_released(button_t *button){
+uint8_t isButtonReleased(button_t *button){
 	osMutexWait(button->mutexID, BUTTON_MUTEX_TIMEOUT);
 	uint8_t released = 0;
 	if ((button->history & BUTTON_COMP_MASK) == BUTTON_COMP_PRES){
 		released = 1;
 		button->history = 0x00000000;
 	}
+	osMutexRelease(button->mutexID);
 	return released;
-	osMutexRelease(button->mutexID);
 }
 
-uint8_t is_button_down(button_t *button){
+uint8_t isButtonDown(button_t *button){
 	osMutexWait(button->mutexID, BUTTON_MUTEX_TIMEOUT);
-	return (button->history == 0xFFFFFFFF);
+	uint8_t state = button->history == 0xFFFFFFFF;
 	osMutexRelease(button->mutexID);
+	return state;
 }
 
-uint8_t is_button_up(button_t *button){
+uint8_t isButtonUp(button_t *button){
 	osMutexWait(button->mutexID, BUTTON_MUTEX_TIMEOUT);
-	return (button->history == 0x00000000);
+	uint8_t state = button->history == 0x00000000;
 	osMutexRelease(button->mutexID);
+	return state;
 }
 
 void buttonUpdateThreadFunc(void const *argument)
@@ -96,15 +95,18 @@ void buttonSetup(void)
 	buttons[setCAN].GPIOx = BUTTON_CAN_GPIO_Port;
 	buttons[setCAN].GPIO_Pin = BUTTON_CAN_Pin;
 	buttons[setCAN].history = 0;
+	static osStaticMutexDef_t buttonCANCB;
 	osMutexStaticDef(buttonCAN, &buttonCANCB);
 	buttons[setCAN].mutexID = osMutexCreate(osMutex(buttonCAN));
 
 	buttons[setSen].GPIOx = BUTTON_SEN_GPIO_Port;
 	buttons[setSen].GPIO_Pin = BUTTON_SEN_Pin;
 	buttons[setSen].history = 0;
+	static osStaticMutexDef_t buttonSenCB;
 	osMutexStaticDef(buttonSen, &buttonSenCB);
 	buttons[setSen].mutexID = osMutexCreate(osMutex(buttonSen));
 
+	static buttonThreadParam_t buttonParam;
 	buttonParam.numButton = 2;
 	buttonParam.buttonArray = buttons;
 

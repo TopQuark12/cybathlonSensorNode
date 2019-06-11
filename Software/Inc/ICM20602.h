@@ -142,7 +142,7 @@ extern imuRaw_t gIMUOffset;
 
 // uint8_t icm20602Init(void);
 // void icm20602Update(void);
-extern osMessageQId imuDataQueueHandle;
+extern QueueHandle_t imuDataQueueHandle;
 void startIMUSampling(void *argument);
 float rawConvertionAccel(int16_t *rawData);
 float rawConvertionGyro(int16_t *rawData);

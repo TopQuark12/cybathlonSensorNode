@@ -19,6 +19,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "userIO.h"
+#include "FreeRTOS.h"
 
 FATFS          SDFatFs;                               /* file system object for SD card logical drive */
 uint32_t       byteswritten, bytesread;               /* file write/read counts */
@@ -26,6 +28,8 @@ uint8_t        rtext[100];                            /* file read buffer */
 uint8_t        err;
 static char    *f_name = "data.csv";           /* file name */
 uint8_t        wtext[] = " Welcome to HKUST! "; 	/* file write buffer */
+
+extern QueueHandle_t imuDataQueueHandle;
 
 /**
   * @brief  doing some tests to SD card, like mount, create file, open a text etc. 
@@ -104,7 +108,7 @@ void fatfsWriteln(char data[], uint8_t len)
 	f_write(&SDFile, data, len, (void *)&byteswritten);
 }
 
-uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame)
+uint8_t fatfsWriteIMUFrame(imuDataFrame_t const *inFrame)
 {
 	char line[100];
 	float data[2];
@@ -112,7 +116,7 @@ uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame)
 	char axis;
 	const char axisName[] = {'x', 'y', 'z'};
 
-	data[ACCEL] = rawConvertionAccel((int16_t *)&inFrame.dataRaw[ACCEL]);
+	data[ACCEL] = rawConvertionAccel((int16_t *)&(inFrame->dataRaw[ACCEL]));
 	char *tmpSign = (data[ACCEL] < 0) ? "-" : "";
 	float tmpVal = (data[ACCEL] < 0) ? -data[ACCEL] : data[ACCEL];
 	int tmpInt1 = tmpVal;
@@ -120,7 +124,7 @@ uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame)
 	int tmpInt2 = trunc(tmpFrac * 10000);
 	sprintf(dataStr[ACCEL], "%s%d.%04d", tmpSign, tmpInt1, tmpInt2);
 
-	data[GYRO] = rawConvertionGyro((int16_t *)&inFrame.dataRaw[GYRO]);
+	data[GYRO] = rawConvertionGyro((int16_t *)&(inFrame->dataRaw[GYRO]));
 	tmpSign = (data[GYRO] < 0) ? "-" : "";
 	tmpVal = (data[GYRO] < 0) ? -data[GYRO] : data[GYRO];
 	tmpInt1 = tmpVal;
@@ -128,11 +132,13 @@ uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame)
 	tmpInt2 = trunc(tmpFrac * 10000);
 	sprintf(dataStr[GYRO], "%s%d.%04d", tmpSign, tmpInt1, tmpInt2);
 
-	axis = axisName[inFrame.dataType];
-	uint8_t len = snprintf(line, 100, "%lu,%c,%u,%sg,%sdps\n", inFrame.timeStamp, axis, inFrame.node, dataStr[ACCEL], dataStr[GYRO]);
+	axis = axisName[inFrame->dataType];
+	uint8_t len = snprintf(line, 100, "%lu,%c,%u,%sg,%sdps\n", inFrame->timeStamp,  inFrame->node, axis, dataStr[ACCEL], dataStr[GYRO]);
 	if (len >= 100) {
 		return 1;		//write fail, over-sized line
 	}
+
+	fatfsWriteln(line, len);
 
 	return 0;
 }
@@ -140,12 +146,42 @@ uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame)
 void fatfsThreadFunc(void const * argument)
 {
 	MX_FATFS_Init();
-	fatfsStartLogging();
-	fatfsEndLogging();
+//	fatfsStartLogging();
+//	fatfsEndLogging();
+	uint8_t shouldLog = 0;
+	uint8_t shouldLogPrev = 0;
+	char header[] = "Time stamp (ms), node, axis, acceleration (g), rotational velocity (degree per second)\n";
 
 	for(;;)
 	{
-		
+		if (isButtonPressed(&buttons[setSen])) {
+			shouldLog = 1 - shouldLog;
+			HAL_GPIO_WritePin(LED_G_SEN_GPIO_Port, LED_G_SEN_Pin, shouldLog);
+		}
+
+		if (shouldLog)							//Is logging turned on?
+		{
+			if (!shouldLogPrev)					//Has logging just been turned on?
+			{
+				fatfsStartLogging();
+				fatfsWriteln(header, sizeof(header));
+			}
+			imuDataFrame_t IMUFrame;
+			while (uxQueueMessagesWaiting(imuDataQueueHandle))
+			{
+				xQueueReceive(imuDataQueueHandle, &IMUFrame, 0);
+				fatfsWriteIMUFrame(&IMUFrame);
+			}
+		}
+		else									//logging is turned off
+		{
+			if (shouldLogPrev)					//Has logging just been turned off?
+			{
+				fatfsEndLogging();
+			}
+		}
+
+		shouldLogPrev = shouldLog;
 		osDelay(1);
 	}
 }

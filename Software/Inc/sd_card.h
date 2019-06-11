@@ -22,7 +22,7 @@ extern uint8_t err;
 
 void sd_test(void);
 void fatfsThreadFunc(void const * argument);
-uint8_t fatfsWriteIMUFrame(imuDataFrame_t inFrame);
+uint8_t fatfsWriteIMUFrame(imuDataFrame_t const *inFrame);
 
 #endif
 
