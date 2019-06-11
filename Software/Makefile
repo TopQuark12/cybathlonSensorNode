@@ -90,7 +90,8 @@ Src/flash.c \
 Src/MA730.c \
 Src/fatfs_platform.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
-Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
+Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
+Src/userIO.c
 
 # ASM sources
 ASM_SOURCES =  \

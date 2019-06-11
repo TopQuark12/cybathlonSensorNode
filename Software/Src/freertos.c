@@ -67,6 +67,7 @@
 #include "flash.h"
 #include "MA730.h"
 #include "queue.h"
+#include "userIO.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -276,6 +277,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
+  buttonSetup();
   startIMUSampling(NULL);
   startCanTx(NULL);
   startFlashSave(NULL);
