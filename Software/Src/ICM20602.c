@@ -205,9 +205,12 @@ void IMUSamplingThreadFunc(void const *argument)
 
         if(isMaster != 0)
         {
-            xQueueSend(imuDataQueueHandle, &imuDataFrame[xAxis], 0);
-            xQueueSend(imuDataQueueHandle, &imuDataFrame[yAxis], 0);
-            xQueueSend(imuDataQueueHandle, &imuDataFrame[zAxis], 0);
+            if (shouldLog) 
+            {
+                xQueueSend(imuDataQueueHandle, &imuDataFrame[xAxis], 0);
+                xQueueSend(imuDataQueueHandle, &imuDataFrame[yAxis], 0);
+                xQueueSend(imuDataQueueHandle, &imuDataFrame[zAxis], 0);
+            }
         } else {
             uint8_t canTxFail = 0;
             canTxFail &= IMUSendCANFrame(&imuDataFrame[xAxis]);

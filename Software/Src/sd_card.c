@@ -27,7 +27,8 @@ uint32_t       byteswritten, bytesread;               /* file write/read counts 
 uint8_t        rtext[100];                            /* file read buffer */
 uint8_t        err;
 static char    *f_name = "data.csv";           /* file name */
-uint8_t        wtext[] = " Welcome to HKUST! "; 	/* file write buffer */
+uint8_t wtext[] = "Time stamp(ms),node,axis,acceleration(g),angular velocity(degrees per second)\n "; /* file write buffer */
+uint8_t shouldLog = 0;
 
 extern QueueHandle_t imuDataQueueHandle;
 
@@ -87,6 +88,7 @@ void fatfsStartLogging(void)
 		{
 			err = ERR_OPEN;
 		}
+		f_write(&SDFile, wtext, sizeof(wtext), (void *)&byteswritten);
 	}
 	else
 	{
@@ -133,7 +135,7 @@ uint8_t fatfsWriteIMUFrame(imuDataFrame_t const *inFrame)
 	sprintf(dataStr[GYRO], "%s%d.%04d", tmpSign, tmpInt1, tmpInt2);
 
 	axis = axisName[inFrame->dataType];
-	uint8_t len = snprintf(line, 100, "%lu,%c,%u,%sg,%sdps\n", inFrame->timeStamp,  inFrame->node, axis, dataStr[ACCEL], dataStr[GYRO]);
+	uint8_t len = snprintf(line, 100, "%lu,%u,%c,%s,%s\n", inFrame->timeStamp, inFrame->node, axis, dataStr[ACCEL], dataStr[GYRO]);
 	if (len >= 100) {
 		return 1;		//write fail, over-sized line
 	}
@@ -148,9 +150,9 @@ void fatfsThreadFunc(void const * argument)
 	MX_FATFS_Init();
 //	fatfsStartLogging();
 //	fatfsEndLogging();
-	uint8_t shouldLog = 0;
+	//uint8_t shouldLog = 0;
 	uint8_t shouldLogPrev = 0;
-	char header[] = "Time stamp (ms), node, axis, acceleration (g), rotational velocity (degree per second)\n";
+	//char header[] = "Time stamp (ms), node, axis, acceleration (g), rotational velocity (degree per second)\n";
 
 	for(;;)
 	{
@@ -164,7 +166,8 @@ void fatfsThreadFunc(void const * argument)
 			if (!shouldLogPrev)					//Has logging just been turned on?
 			{
 				fatfsStartLogging();
-				fatfsWriteln(header, sizeof(header));
+				// osDelay(5);
+				// fatfsWriteln(header, sizeof(header));
 			}
 			imuDataFrame_t IMUFrame;
 			while (uxQueueMessagesWaiting(imuDataQueueHandle))

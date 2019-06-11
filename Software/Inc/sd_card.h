@@ -19,6 +19,7 @@
 #define ERR_OPEN       (2)
 
 extern uint8_t err;
+extern uint8_t shouldLog;
 
 void sd_test(void);
 void fatfsThreadFunc(void const * argument);

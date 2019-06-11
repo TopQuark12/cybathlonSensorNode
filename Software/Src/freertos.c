@@ -92,7 +92,7 @@
 // static uint8_t spiImuRxData[16];
 uint16_t magRxData;
 //static uint16_t magTxData;
-uint8_t imuDataQueueBuffer[ 1024 * sizeof( imuDataFrame_t ) ];
+static uint8_t imuDataQueueBuffer[ 1024 * sizeof( imuDataFrame_t ) ];
 static StaticQueue_t imuDataQueueControlBlock;
 QueueHandle_t imuDataQueueHandle;
 
