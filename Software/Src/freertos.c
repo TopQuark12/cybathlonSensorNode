@@ -274,8 +274,10 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
 
   buttonSetup();
-  startIMUSampling(NULL);
   startCanTx(NULL);
+  startIMUSampling(NULL);
+  if (isMaster)
+    startCanRx();
   startFlashSave(NULL);
 
   /* USER CODE END RTOS_THREADS */

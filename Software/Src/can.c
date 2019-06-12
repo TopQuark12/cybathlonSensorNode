@@ -26,6 +26,8 @@
 #include "task.h"
 #include "ICM20602.h"
 #include "string.h"
+#include "sd_card.h"
+#include "queue.h"
 
 TaskHandle_t canTxThreadHandle;
 uint32_t canTxThreadStack[256];
@@ -47,7 +49,7 @@ CAN_FilterTypeDef canAllPassFilter =
 };
 
 CAN_RxHeaderTypeDef canRxFrame;
-uint8_t canRxBuffer[8];
+canDataFrame_t canRxBuffer;
 
 CAN_TxHeaderTypeDef canTxFrame;
 uint8_t canTxBuffer[8];
@@ -149,79 +151,50 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
 /* USER CODE BEGIN 1 */
 
-void canTxThreadFunc(void const *argument) 
-{
-  HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
-  HAL_CAN_Start(&hcan1);
-  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+// void canTxThreadFunc(void const *argument) 
+// {
+//   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
+//   HAL_CAN_Start(&hcan1);
+//   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
-  /* Infinite loop */
-  for (;;)
-  {
-    osDelay(1);
-  }
-}
+//   /* Infinite loop */
+//   for (;;)
+//   {
+//     osDelay(1);
+//   }
+// }
 
 void startCanTx(void *argument)
 {
-  //canTxThreadHandle = xTaskCreateStatic((TaskFunction_t)canTxThreadFunc, "canTxThread", 256, NULL, 3, canTxThreadStack, &canTxThreadTCB);
+  // canTxThreadHandle = xTaskCreateStatic((TaskFunction_t)canTxThreadFunc, "canTxThread", 256, NULL, 3, canTxThreadStack, &canTxThreadTCB);
   // osThreadStaticDef(canTxThread, canTxThreadFunc, osPriorityNormal, 0, 256, canTxThreadStack, &canTxThreadTCB);
   // canTxThreadHandle = osThreadCreate(osThread(canTxThread), argument);
   HAL_CAN_ConfigFilter(&hcan1, &canAllPassFilter);
-  HAL_CAN_Start(&hcan1);
+  HAL_CAN_Start(&hcan1);  
+}
+
+void startCanRx(void)
+{
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
 
+imuDataFrame_t rxDataFrame;
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
   while (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))
   {
-    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &canRxFrame, canRxBuffer);
-    //canRxHandler();
+    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &canRxFrame, (uint8_t *) &canRxBuffer);
+    if (shouldLog)
+    {
+      rxDataFrame.dataType = (canRxFrame.StdId & 0x0F0) >> 4;
+      rxDataFrame.node = canRxFrame.StdId & 0x0F;
+      rxDataFrame.timeStamp = canRxBuffer.uint32[1];
+      rxDataFrame.dataRaw[GYRO] = canRxBuffer.uint16[1];
+      rxDataFrame.dataRaw[ACCEL] = canRxBuffer.uint16[0];
+      xQueueSendFromISR(imuDataQueueHandle, &rxDataFrame, 0);
+    }
   }
 }
-
-// void canIDInit(void)
-// {
-//   canTxFrame.StdId = canDefaultID;
-//   canTxFrame.IDE = CAN_ID_STD;
-//   canTxFrame.RTR = CAN_RTR_DATA;
-//   canTxFrame.DLC = 8;
-//   canTxFrame.TransmitGlobalTime = DISABLE;
-// }
-
-// void canRxHandler(void)
-// {
-//   return;
-// }
-
-// void canTxMessageWithID(uint32_t canID, uint8_t data[])
-// {
-//   canTxFrame.StdId = canID;
-//   memcpy(canTxBuffer, data, 8);
-//   if (HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, canTxBuffer, canTxMailboxUsed) != HAL_OK)
-//   {
-//     /* Transmission request Error */
-//     Error_Handler();
-//   }
-// }
-
-// void canTxMessage(uint8_t data[])
-// {
-//   canTxMessageWithID(canDefaultID, data);
-// }
-
-// void canTxFloatMessageWithID(uint32_t canID, float f1, float f2)
-// {
-//   memcpy(canTxBuffer, &f1, 4);
-//   memcpy(canTxBuffer + 4, &f2, 4);
-//   canTxMessageWithID(canID, canTxBuffer);
-// }
-
-// void canTxFloatMessage(float f1, float f2)
-// {
-//   canTxFloatMessageWithID(canDefaultID, f1, f2);
-// }
 
 /* USER CODE END 1 */
 

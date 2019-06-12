@@ -34,18 +34,18 @@ extern CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN Private defines */
 
-#define CAN_IMU_X_MASK 0x010
-#define CAN_IMU_Y_MASK 0x020
-#define CAN_IMU_Z_MASK 0x030
+// #define CAN_IMU_X_MASK 0x010
+// #define CAN_IMU_Y_MASK 0x020
+// #define CAN_IMU_Z_MASK 0x030
 
-extern CAN_FilterTypeDef canAllPassFilter;
+// extern CAN_FilterTypeDef canAllPassFilter;
 
-extern CAN_RxHeaderTypeDef canRxFrame;
-extern uint8_t canRxBuffer[8];
+// extern CAN_RxHeaderTypeDef canRxFrame;
+// extern uint8_t canRxBuffer[8];
 
-extern CAN_TxHeaderTypeDef canTxFrame;
-extern uint8_t canTxBuffer[8];
-extern uint32_t *canTxMailboxUsed;
+// extern CAN_TxHeaderTypeDef canTxFrame;
+// extern uint8_t canTxBuffer[8];
+// extern uint32_t *canTxMailboxUsed;
 extern uint32_t canDefaultID;
 
 /* USER CODE END Private defines */
@@ -61,6 +61,7 @@ void canTxMessage(uint8_t data[]);
 void canTxFloatMessageWithID(uint32_t canID, float f1, float f2);
 void canTxFloatMessage(float f1, float f2);
 void startCanTx(void *argument);
+void startCanRx(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

@@ -153,9 +153,9 @@ uint8_t IMUSendCANFrame(imuDataFrame_t *dataFrame)
     canDataFrame_t canTxBuffer;
     uint32_t canTxMailboxUsed;
 
-    canTxFrame.StdId = 0x100 &
-                       ((dataFrame->dataType & 0xF0) << 4) &
-                       (dataFrame->node & 0xF0);
+    canTxFrame.StdId = 0x100 |
+                       ((dataFrame->dataType & 0x0F) << 4) |
+                       (dataFrame->node & 0x0F);
     canTxFrame.IDE = CAN_ID_STD;
     canTxFrame.DLC = 8;
     canTxFrame.RTR = CAN_RTR_DATA;
@@ -211,14 +211,15 @@ void IMUSamplingThreadFunc(void const *argument)
                 xQueueSend(imuDataQueueHandle, &imuDataFrame[yAxis], 0);
                 xQueueSend(imuDataQueueHandle, &imuDataFrame[zAxis], 0);
             }
-        } else {
+        } 
+        else
+        {
             uint8_t canTxFail = 0;
             canTxFail &= IMUSendCANFrame(&imuDataFrame[xAxis]);
             canTxFail &= IMUSendCANFrame(&imuDataFrame[yAxis]);
             canTxFail &= IMUSendCANFrame(&imuDataFrame[zAxis]);
             HAL_GPIO_WritePin(LED_R_ERROR_GPIO_Port, LED_R_ERROR_Pin, canTxFail);
         }
-
         osDelay(10);
     }
 }

@@ -87,12 +87,14 @@ void fatfsStartLogging(void)
 		if (f_open(&SDFile, f_name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 		{
 			err = ERR_OPEN;
+			HAL_GPIO_WritePin(LED_R_ERROR_GPIO_Port, LED_R_ERROR_Pin, GPIO_PIN_SET);
 		}
 		f_write(&SDFile, wtext, sizeof(wtext), (void *)&byteswritten);
 	}
 	else
 	{
 		err = ERR_MOUNT_MKFS;
+		HAL_GPIO_WritePin(LED_R_ERROR_GPIO_Port, LED_R_ERROR_Pin, GPIO_PIN_SET);
 	}
 }
 
@@ -148,11 +150,7 @@ uint8_t fatfsWriteIMUFrame(imuDataFrame_t const *inFrame)
 void fatfsThreadFunc(void const * argument)
 {
 	MX_FATFS_Init();
-//	fatfsStartLogging();
-//	fatfsEndLogging();
-	//uint8_t shouldLog = 0;
 	uint8_t shouldLogPrev = 0;
-	//char header[] = "Time stamp (ms), node, axis, acceleration (g), rotational velocity (degree per second)\n";
 
 	for(;;)
 	{
@@ -166,8 +164,6 @@ void fatfsThreadFunc(void const * argument)
 			if (!shouldLogPrev)					//Has logging just been turned on?
 			{
 				fatfsStartLogging();
-				// osDelay(5);
-				// fatfsWriteln(header, sizeof(header));
 			}
 			imuDataFrame_t IMUFrame;
 			while (uxQueueMessagesWaiting(imuDataQueueHandle))
