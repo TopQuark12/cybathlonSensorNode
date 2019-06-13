@@ -21,6 +21,7 @@
 #include "math.h"
 #include "userIO.h"
 #include "FreeRTOS.h"
+#include "can.h"
 
 FATFS          SDFatFs;                               /* file system object for SD card logical drive */
 uint32_t       byteswritten, bytesread;               /* file write/read counts */
@@ -76,6 +77,23 @@ void sd_test(void)
 	}
 	/* Unlink the SD disk I/O driver */
 	FATFS_UnLinkDriver(SDPath);  
+}
+
+uint8_t sendCANtimestamp(void)
+{
+	static CAN_TxHeaderTypeDef canTxFrame;
+	canDataFrame_t canTxBuffer;
+	uint32_t canTxMailboxUsed;
+
+	canTxFrame.StdId = 0x200;
+	canTxFrame.IDE = CAN_ID_STD;
+	canTxFrame.DLC = 8;
+	canTxFrame.RTR = CAN_RTR_DATA;
+	canTxFrame.TransmitGlobalTime = DISABLE;
+
+	canTxBuffer.uint32[0] = HAL_GetTick();
+
+	return HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, (uint8_t *)&canTxBuffer, &canTxMailboxUsed);
 }
 
 void fatfsStartLogging(void)
@@ -164,6 +182,7 @@ void fatfsThreadFunc(void const * argument)
 			if (!shouldLogPrev)					//Has logging just been turned on?
 			{
 				fatfsStartLogging();
+				sendCANtimestamp();
 			}
 			imuDataFrame_t IMUFrame;
 			while (uxQueueMessagesWaiting(imuDataQueueHandle))

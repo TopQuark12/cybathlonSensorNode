@@ -168,8 +168,7 @@ uint8_t IMUSendCANFrame(imuDataFrame_t *dataFrame)
     return HAL_CAN_AddTxMessage(&hcan1, &canTxFrame, (uint8_t *)&canTxBuffer, &canTxMailboxUsed);
 }
 
-
-
+uint32_t timeStamp = 0;
 void IMUSamplingThreadFunc(void const *argument)
 {
     icm20602Init();
@@ -187,7 +186,7 @@ void IMUSamplingThreadFunc(void const *argument)
     for (;;)
     {
         icm20602Update();
-        uint32_t timeStamp = HAL_GetTick();
+        timeStamp = HAL_GetTick() + timeDiffMaster;
 
         for (uint8_t i = 0; i < 3; i++)
         {

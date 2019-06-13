@@ -91,6 +91,7 @@
 /* USER CODE BEGIN PV */
 uint8_t isMaster = 0;
 uint8_t sensorNodeID = 0;
+int32_t timeDiffMaster = 0;    //delay in tick between this node and master node, eq to masterTick - selfTick
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

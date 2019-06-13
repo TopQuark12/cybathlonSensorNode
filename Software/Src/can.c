@@ -184,14 +184,24 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   while (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0))
   {
     HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &canRxFrame, (uint8_t *) &canRxBuffer);
-    if (shouldLog)
+    if(isMaster)
     {
-      rxDataFrame.dataType = (canRxFrame.StdId & 0x0F0) >> 4;
-      rxDataFrame.node = canRxFrame.StdId & 0x0F;
-      rxDataFrame.timeStamp = canRxBuffer.uint32[1];
-      rxDataFrame.dataRaw[GYRO] = canRxBuffer.uint16[1];
-      rxDataFrame.dataRaw[ACCEL] = canRxBuffer.uint16[0];
-      xQueueSendFromISR(imuDataQueueHandle, &rxDataFrame, 0);
+      if (shouldLog)
+      {
+        rxDataFrame.dataType = (canRxFrame.StdId & 0x0F0) >> 4;
+        rxDataFrame.node = canRxFrame.StdId & 0x0F;
+        rxDataFrame.timeStamp = canRxBuffer.uint32[1];
+        rxDataFrame.dataRaw[GYRO] = canRxBuffer.uint16[1];
+        rxDataFrame.dataRaw[ACCEL] = canRxBuffer.uint16[0];
+        int32_t timeDiff = rxDataFrame.timeStamp - HAL_GetTick();
+        if((timeDiff < 20) && (timeDiff > -20))
+          xQueueSendFromISR(imuDataQueueHandle, &rxDataFrame, 0);
+      }
+    } else {
+      if(canRxFrame.StdId == 0x200)
+      {
+        timeDiffMaster = canRxBuffer.uint32[0] - HAL_GetTick();
+      }
     }
   }
 }

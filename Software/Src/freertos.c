@@ -275,9 +275,8 @@ void MX_FREERTOS_Init(void) {
 
   buttonSetup();
   startCanTx(NULL);
+  startCanRx();
   startIMUSampling(NULL);
-  if (isMaster)
-    startCanRx();
   startFlashSave(NULL);
 
   /* USER CODE END RTOS_THREADS */

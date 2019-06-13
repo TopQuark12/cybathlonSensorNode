@@ -75,6 +75,7 @@ extern "C" {
 /* USER CODE BEGIN EC */
 extern uint8_t isMaster;
 extern uint8_t sensorNodeID;
+extern int32_t timeDiffMaster;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
