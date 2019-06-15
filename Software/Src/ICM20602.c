@@ -208,18 +208,21 @@ void IMUSamplingThreadFunc(void const *argument)
             {
                 xQueueSend(imuDataQueueHandle, &imuDataFrame[xAxis], 0);
                 xQueueSend(imuDataQueueHandle, &imuDataFrame[yAxis], 0);
-                xQueueSend(imuDataQueueHandle, &imuDataFrame[zAxis], 0);
+                xQueueSend(imuDataQueueHandle, &imuDataFrame[zAxis], 0);                
             }
+            osDelay(10);
         } 
         else
         {
+            osDelay(sensorNodeID);
             uint8_t canTxFail = 0;
             canTxFail &= IMUSendCANFrame(&imuDataFrame[xAxis]);
             canTxFail &= IMUSendCANFrame(&imuDataFrame[yAxis]);
             canTxFail &= IMUSendCANFrame(&imuDataFrame[zAxis]);
             HAL_GPIO_WritePin(LED_R_ERROR_GPIO_Port, LED_R_ERROR_Pin, canTxFail);
+            osDelay(10 - sensorNodeID);
         }
-        osDelay(10);
+        
     }
 }
 
