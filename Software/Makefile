@@ -99,7 +99,8 @@ Middlewares/Third_Party/systemView/SEGGER/SEGGER_SYSVIEW.c
 
 # ASM sources
 ASM_SOURCES =  \
-startup_stm32f405xx.s
+startup_stm32f405xx.s \
+Middlewares/Third_Party/systemView/SEGGER/SEGGER_RTT_ASM_ARMv7M.s
 
 
 #######################################

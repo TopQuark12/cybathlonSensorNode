@@ -1,0 +1,11 @@
+--- tasks.c
++++ tasks.c
+@@ -3769,7 +3795,7 @@ TCB_t *pxTCB;
+ 
+ 					/* Inherit the priority before being moved into the new list. */
+ 					pxTCB->uxPriority = pxCurrentTCB->uxPriority;
+-					prvAddTaskToReadyList( pxTCB );
++					prvReaddTaskToReadyList( pxTCB );
+ 				}
+ 				else
+ 				{

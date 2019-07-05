@@ -69,6 +69,8 @@
 #include "sd_card.h"
 #include "flash.h"
 
+#include "SEGGER_SYSVIEW.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,7 +115,7 @@ void MX_FREERTOS_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  DWT->CTRL |= (1 << 0);    //enable cortex m DWT cycle counting
   /* USER CODE END 1 */
   
 
@@ -130,7 +132,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  SEGGER_SYSVIEW_Conf();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
