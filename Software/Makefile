@@ -91,7 +91,11 @@ Src/MA730.c \
 Src/fatfs_platform.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
 Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c \
-Src/userIO.c
+Src/userIO.c \
+Middlewares/Third_Party/systemView/Config/SEGGER_SYSVIEW_Config_FreeRTOS.c \
+Middlewares/Third_Party/systemView/OS/SEGGER_SYSVIEW_FreeRTOS.c \
+Middlewares/Third_Party/systemView/SEGGER/SEGGER_RTT.c \
+Middlewares/Third_Party/systemView/SEGGER/SEGGER_SYSVIEW.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -157,7 +161,10 @@ C_INCLUDES =  \
 -IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS \
 -IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
--IDrivers/CMSIS/Include
+-IDrivers/CMSIS/Include \
+-IMiddlewares/Third_Party/systemView/Config \
+-IMiddlewares/Third_Party/systemView/OS \
+-IMiddlewares/Third_Party/systemView/SEGGER
 
 
 # compile gcc flags
