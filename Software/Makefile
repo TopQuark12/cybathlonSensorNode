@@ -95,7 +95,8 @@ Src/userIO.c \
 Middlewares/Third_Party/systemView/Config/SEGGER_SYSVIEW_Config_FreeRTOS.c \
 Middlewares/Third_Party/systemView/OS/SEGGER_SYSVIEW_FreeRTOS.c \
 Middlewares/Third_Party/systemView/SEGGER/SEGGER_RTT.c \
-Middlewares/Third_Party/systemView/SEGGER/SEGGER_SYSVIEW.c
+Middlewares/Third_Party/systemView/SEGGER/SEGGER_SYSVIEW.c \
+Src/madgwickAHRS.c
 
 # ASM sources
 ASM_SOURCES =  \

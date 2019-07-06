@@ -18,6 +18,7 @@
 #include <string.h>
 #include "can.h"
 #include "sd_card.h"
+#include "madgwickAHRS.h"
 
 TaskHandle_t IMUSamplingThreadHandle;
 uint32_t IMUSamplingThreadStack[256];
@@ -26,6 +27,8 @@ extern QueueHandle_t imuDataQueueHandle;
 
 imu_t gIMUdata;
 imuRaw_t gIMUOffset, imuRawData;
+madgwickAhrs_t gAHRSdata;
+float heading[3];
 
 /**
  * @brief	Basic bytewise SPI transmit and receive, with CS pin setting
@@ -106,6 +109,7 @@ uint8_t icm20602Init(void)
     icm20602WriteReg(YA_OFFSET_L, gIMUOffset.accData[yAxis] & 0xFF);
     icm20602WriteReg(ZA_OFFSET_H, gIMUOffset.accData[zAxis] >> 8);
     icm20602WriteReg(ZA_OFFSET_L, gIMUOffset.accData[zAxis] & 0xFF);
+    madgwickInit(&gAHRSdata, 0.1, 1000);
     return 1;
 }
 
@@ -145,6 +149,10 @@ void icm20602Update(void)
     gIMUdata.gyroData[yAxis] = rawConvertionGyro(&imuRawData.gyroData[yAxis]);
     imuRawData.gyroData[zAxis] = (rxBuffer[13]) << 8 | rxBuffer[14];
     gIMUdata.gyroData[zAxis] = rawConvertionGyro(&imuRawData.gyroData[zAxis]);
+    madgwickUpdateIMU(&gAHRSdata, gIMUdata.gyroData[xAxis], gIMUdata.gyroData[yAxis], gIMUdata.gyroData[zAxis], imuRawData.accData[xAxis], imuRawData.accData[yAxis], imuRawData.accData[zAxis]);
+    heading[ROLL] = getRoll(&gAHRSdata);
+    heading[PITCH] = getPitch(&gAHRSdata);
+    heading[YAW] = getYaw(&gAHRSdata);
 }
 
 uint8_t IMUSendCANFrame(imuDataFrame_t *dataFrame)

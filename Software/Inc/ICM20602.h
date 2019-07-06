@@ -137,6 +137,13 @@ typedef union canDataFrame_t
     uint8_t uint8[8];
 } canDataFrame_t;
 
+typedef enum
+{
+    ROLL = 0,
+    PITCH,
+    YAW
+} rotationalAxis_e;
+
 extern imu_t gIMUdata;
 extern imuRaw_t gIMUOffset;
 
